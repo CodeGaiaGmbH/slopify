@@ -180,7 +180,7 @@ git commit -m {{ commit.splitlines()[0]|escape }}
 # Prompt for PR title
 #
 {{print("Prompting for PR title...")}}
-  {% set title|dedent|prompt("ollama/qwen3:14b")|code|replace("'", " ")|trim %}
+{% set title|dedent|prompt("ollama/qwen3:14b")|code|replace("'", " ")|trim %}
   # Task
   We need a good pull request title.
   Only one suggestion in backticks please.
@@ -235,6 +235,19 @@ git commit -m {{ commit.splitlines()[0]|escape }}
   - This is the current ticket number: {{ ticket_id }}
 
   /no_think
+{% endset %}
+
+
+
+#
+# Add marker to the description that this is AI generated
+#
+{% set description %}
+This pull request is generated with the help of AI by [slopify](https://github.com/CodeGaiaGmbH/slopify).
+
+---
+
+{{ description }}
 {% endset %}
 
 #
