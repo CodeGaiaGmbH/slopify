@@ -6,7 +6,7 @@
 # Load config
 #
 {% set conf = loadini("~/.slopify.ini") %}
-{{ print("Config:", conf) }}
+{{ conf.setdefault("models", {}) }}
 
 #
 # Let user pick a ticket if none passed as argument
@@ -160,7 +160,7 @@ Output the whole files you changed.
   git add .
 {% endfilter %}
 
-{% set commit|dedent|prompt("ollama/qwen3:4b")|striptags %}
+{% set commit|dedent|prompt(conf.models.small or "ollama/qwen3:4b")|striptags %}
   Create a very short commit message based on this diff:
   ```
     {% filter run() %}
@@ -180,7 +180,7 @@ git commit -m {{ commit.splitlines()[0]|escape }}
 # Prompt for PR title
 #
 {{print("Prompting for PR title...")}}
-{% set title|dedent|prompt("ollama/qwen3:14b")|code|replace("'", " ")|trim %}
+{% set title|dedent|prompt(conf.models.small or "ollama/qwen3:14b")|code|replace("'", " ")|trim %}
   # Task
   We need a good pull request title.
   Only one suggestion in backticks please.
@@ -209,7 +209,7 @@ git commit -m {{ commit.splitlines()[0]|escape }}
 # Prompt for PR description
 #
 {{print("Prompting for PR description...")}}
-{% set description|dedent|prompt("ollama/qwen3:14b") %}
+{% set description|dedent|prompt(conf.models.small or "ollama/qwen3:14b") %}
   # Task
   Write the pull request description
 
@@ -260,7 +260,7 @@ This pull request is generated with the help of AI by [slopify](https://github.c
     --title WIP\ {{ title|escape }} \
     --body  {{ description|escape }} \
     --head {{ branch|escape }} \
-    --web
+    --draft
 {% endfilter %}
 
 {#

@@ -15,6 +15,39 @@ Be carefull to not push company data in here.
 | pick-comment | Change local files to comply with request in GitHub comment     |
 | ...    | ...add more here...    |
 
+
+## Use with docker
+
+### 1. Build image
+```
+docker build -t slopify .
+```
+
+### 2. Configure
+Add this to your config
+```
+[models]
+small=gemini/gemini-2.5-flash
+
+[envs]
+JIRA_API_TOKEN=...
+GEMINI_API_KEY=...
+GH_TOKEN=...
+
+```
+
+### 3. Run slopify init
+Jira needs attention
+```
+docker run -ti -v ~/.slopify.ini:/root/.slopify.ini -v slopify-jira-config:/root/.config/.jira slopify slopify init
+```
+
+
+### 4. Run slopify
+```
+docker run -ti -v ~/.slopify.ini:/root/.slopify.ini -v slopify-jira-config:/root/.config/.jira -v ~/.ssh:/root/.ssh -v ~/.git:/root/.git slopify slopify pick-ticket AA-350
+```
+
 ## Install
 ### 1. Clone this repo
 ```
