@@ -91,7 +91,7 @@ jira issues show {{ticket_id|escape}} --plain --comments 0
 # Prompt for list of relevant files
 #
 {{print("Prompting for relevant files list...")}}
-{% set files|dedent|prompt("gemini/gemini-2.5-flash")|code %}
+{% set files|dedent|prompt("gemini/gemini-2.5-pro")|code %}
 
   # Requested code changes
   ## {{ ticket.fields.summary }}
@@ -135,7 +135,7 @@ Output the whole files you changed.
 # Convert implementation completion to JSON
 #
 {{print("Prompting to convert implementation into JSON...")}}
-{% set changes_json|dedent|prompt("gemini/gemini-2.5-flash", temperature=0)|code|json %}
+{% set changes_json|dedent|prompt("gemini/gemini-2.5-pro", temperature=0)|code|json %}
   Map the following to a JSON dict: filename -> content. Where filename and content are strings.
   ```
   {{changes}}
@@ -175,6 +175,23 @@ set -x
 git commit -m {{ commit.splitlines()[0]|escape }}
 {% endfilter %}
 
+#
+# Commit any eventual changes done by the hook
+#
+{% set hook_script = conf.hooks[repo] %}
+{% if hook_script %}
+  {{print("Running hook script...")}}
+  {% filter run %}
+    set -ex
+    {{ hook_script }}
+    git add .
+    git diff
+    git commit -m {{ conf.hooks_commit[repo]|default("Run hook")|escape }} --no-verify
+    exit
+  {% endfilter %}
+{% else %}
+  {{print("No hook script found.")}}
+{% endif %}
 
 #
 # Prompt for PR title
@@ -198,9 +215,12 @@ git commit -m {{ commit.splitlines()[0]|escape }}
   Infer the ticket number from `{{ ticket_id }}`. Example for a title: `Feat(DD-123): ....`.
 
   # These are the PR changes
-  {% filter run(label=True) %}
-    git diff $(git merge-base --fork-point test)
+  ```
+  {% filter run %}
+    default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD | cut -d'/' -f2-)"
+    git diff $(git merge-base --fork-point "$default_branch")
   {% endfilter %}
+  ```
   /no_think
 {% endset %}
 
@@ -230,7 +250,7 @@ git commit -m {{ commit.splitlines()[0]|escape }}
 
 
   # Notes:
-  - Be concise and clear.
+  - Be concise, clear and brief.
   - A template for the Jira ticket url: https://{{ conf.jira.org }}.atlassian.net/browse/XXXXX
   - This is the current ticket number: {{ ticket_id }}
 
@@ -255,18 +275,12 @@ This pull request is generated with the help of AI by [slopify](https://github.c
 #
 {% filter run %}
   set -ex
-  git push --set-upstream origin {{branch|escape}}
+  git push --set-upstream origin {{branch|escape}} --no-verify
   gh pr create \
     --title WIP\ {{ title|escape }} \
     --body  {{ description|escape }} \
     --head {{ branch|escape }} \
     --web
 {% endfilter %}
-
-{#
-{% filter run %}
-  gh pr view --web
-{% endfilter %}
-#}
 
 {{print("\nDone.")}}
