@@ -17,6 +17,6 @@ jira issues list \
 {{ print("Processing ticket {}...".format(ticket_id)) }}
 
 {% filter run %}
-slopify pick-ticket {{ ticket_id }} || echo "Failed to process ticket {{ ticket_id }}." >&2
+slopify pick-ticket {{ ticket_id }} >&2 || echo "Failed to process ticket {{ ticket_id }}." >&2
 {% endfilter %}
 {% endfor %}
