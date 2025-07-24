@@ -1,0 +1,66 @@
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# dependencies = [
+#    "gradio",
+#    "pywebview",
+# ]
+# ///
+
+import gradio as gr
+import subprocess
+import os
+import webview
+
+
+def run_script(user_input):
+    process = subprocess.Popen(
+        [
+            "/Users/ihucos/slopify/bin/slopify",
+            "pick-ticket",
+            user_input,
+        ],  # or any command/script
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+        env=dict(os.environ, PYTHONUNBUFFERED="1"),
+    )
+
+    lines = ""
+    for line in process.stdout:
+        print(line, end="")
+        lines += line
+        yield lines
+
+
+# Define the Gradio interface
+with gr.Blocks(
+    title="Slopify UI",
+    css="footer {display: none !important;}",  # Hides the Gradio footer
+) as demo:  # Using gr.Blocks for better layout control
+
+    with gr.Tab("Ticket"):
+        gr.Interface(
+            fn=run_script,
+            inputs=gr.Textbox(
+                label="Ticket ID (e.g., ABC-123)",
+                placeholder="Enter your ticket ID here",
+            ),
+            outputs=gr.Textbox(
+                label="Log", lines=18, show_copy_button=True, interactive=False
+            ),
+            flagging_mode="never",
+            submit_btn="Create Pull Request",
+        )
+
+    with gr.Tab("Config"):
+        gr.Markdown("TODO: Implement.")
+
+
+demo.launch(
+    server_name="127.0.0.1", server_port=7868, inbrowser=False, prevent_thread_lock=True
+)
+
+webview.create_window("Slopify UI", "http://127.0.0.1:7868")
+webview.start()
