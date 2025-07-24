@@ -3,7 +3,7 @@
 # /// script
 # dependencies = [
 #        "jira @ git+https://github.com/pycontribs/jira.git@3.10.1",
-#        "siesta @ git+https://github.com/ihucos/siesta.git",
+#        "siesta @ /Users/ihucos/siesta",
 # ]
 # ///
 
@@ -11,9 +11,23 @@
 
 import os
 import sys
+from configparser import ConfigParser
+
 
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.environ["PYTHONPATH"] = os.path.join(project_dir, "lib")
+
+
+# Read config 
+config = ConfigParser()
+config.optionxform = str
+if not config.read(os.path.expanduser("~/.slopify.ini")):
+    print("Could not read ~/.slopify.ini", file=sys.stderr)
+    sys.exit(1)
+
+# Read env vars from config
+envs = dict(config["envs"]) if "envs" in config else {}
+os.environ.update(envs)
 
 if len(sys.argv) == 1:
   print("Usage: slopify <subcommand> (try `slopify help`)")
