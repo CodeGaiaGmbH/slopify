@@ -28,17 +28,17 @@ git clone git@github.com:Spenoki-Solutions-GmbH/slopify.git
 export PATH="/path/to/slopify/bin:$PATH"
 ```
 ### 3. Dependencies
-* Setup: [jira-cli](https://github.com/ankitpokhrel/jira-cli)
+* Run: `brew install fzf jq uv gh`
 * Setup: [GitHub CLI](https://cli.github.com/)
-* Setup: [Ollama](https://ollama.com/download)
-* Install siesta: `pip3 install git+https://github.com/ihucos/siesta.git`
-* Run: `brew install fzf jq`
 
 ### 4. Configure
 ```ini
 # ~/.slopify.ini
 [jira]
-org=jira_org_name
+org=example
+url=https://example.atlassian.net
+user=user@example.com
+api_token=...
 
 [jira_labels]
 label1=owner/repo1
@@ -52,12 +52,6 @@ Set it to the environment:
 ```
 export GEMINI_API_KEY=...
 ```
-### 6. Download local models
-```
-ollama pull qwen3:4b
-ollama pull qwen3:14b
-```
-
 
 ## Example usage
 ```

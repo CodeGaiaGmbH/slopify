@@ -3,20 +3,24 @@
 
 # Scan Jira ticket_ids with the `slopify` label and call the `pick-ticket` subcommand for them
 
-{% set tickets|run()|trim("\n") %}
-jira issues list \
-    --plain \
-    --columns KEY \
-    --no-headers \
-    --jql 'project IS NOT EMPTY AND labels = "slopify" AND statusCategory = "To Do" AND development[pullrequests].open = 0'
-{% endset %}
 
-{{ print("Found tickets:\n{}".format(tickets)) }}
+#
+# Set up jira
+#
+{% set jiralib = import("jira") %}
+{% set conf = loadini("~/.slopify.ini") %}
+{% set jira=jiralib.JIRA(server=conf.jira.url, basic_auth=(conf.jira.user, conf.jira.api_token)) %})) }
 
-{% for ticket_id in tickets.split("\n") %}
+{% set tickets=jira.search_issues(
+  'project IS NOT EMPTY AND labels = "slopify" AND statusCategory = "To Do" AND development[pullrequests].open = 0')
+%}
+
+{{ print("Found tickets: {}".format(tickets)) }}
+
+{% for ticket in tickets %}
 {{ print("Processing ticket {}...".format(ticket_id)) }}
 
 {% filter run %}
-slopify pick-ticket {{ ticket_id }} >&2 || echo "Failed to process ticket {{ ticket_id }}." >&2
+slopify pick-ticket {{ ticket.key }} >&2 || echo "Failed to process ticket {{ ticket_id }}." >&2
 {% endfilter %}
 {% endfor %}
