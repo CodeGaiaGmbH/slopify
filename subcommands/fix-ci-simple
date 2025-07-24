@@ -1,0 +1,59 @@
+#!/usr/bin/env siesta
+# vim: set ft=jinja
+
+
+###
+{{ print("Retrieving error log...") }}
+###
+{%
+  set branch = "git symbolic-ref --short HEAD || true"|run
+  or error("Current git branch could not be determined.")
+%}
+{% set error_log|run %}
+  job="$(gh run list --branch {{branch|escape}} --limit 1 --jq ".[0].databaseId" --json databaseId)"
+  gh run view "$job" --log-failed
+{% endset %}
+{% if error_log %}
+  {{ print(error_log) }}
+{% else %}
+  {{ error("No CI errors") }}
+{% endif %}
+
+###
+{{ print("Prompting for file with error...") }}
+###
+{% set file_with_error|dedent|prompt("gemini/gemini-2.5-pro")|code %}
+  Print the full path of the file containing the error as code block.
+
+  ```
+  {{ error_log }}
+  ```
+{% endset %}
+{{ print("File:", file_with_error) }}
+
+
+###
+{{ print("Prompting for fixed file contents...") }}
+###
+{% set fixed_file_contents|dedent|prompt("gemini/gemini-2.5-pro")|code %}
+  # Task
+  Fix the error. Print the full fixed file content.
+
+  ## Error log
+  ```
+  {{ error_log }}
+  ```
+
+  ## File
+  ```
+  {{ file_with_error|read }}
+  ```
+{% endset %}
+
+
+###
+{{ print("Writing the fix to", file_with_error, "...") }}
+###
+{{ fixed_file_contents|write(file_with_error) }}
+
+{{print("Done.")}}

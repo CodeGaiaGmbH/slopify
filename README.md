@@ -11,8 +11,10 @@ Be carefull to not push company data in here.
 
 | | |
 | -------- | ------- |
-| pick-ticket  | Implement a ticket in Jira    |
-| pick-comment | Change local files to comply with request in GitHub comment     |
+| fix-ci-simple | Fix simple CI errors     |
+| pick-comment  | Change local files to comply with request in GitHub comment     |
+| pick-ticket   | Implement a ticket in Jira    |
+| scan-tickets   | Implement Jira tickets with `slopify` label    |
 | ...    | ...add more here...    |
 
 ## Install
