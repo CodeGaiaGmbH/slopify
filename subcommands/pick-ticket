@@ -8,39 +8,26 @@
 {% set conf = loadini("~/.slopify.ini") %}
 {{ print("Config:", conf) }}
 
+
 #
-# Let user pick a ticket if none passed as argument
+# Import jira
+#
+{% set jiralib = import("jira") %}
+{% set jira=jiralib.JIRA(server=conf.jira.url, basic_auth=(conf.jira.user, conf.jira.api_token)) %})) }
+
+#
+# Check the first argument is a ticket
 #
 {% set ticket_id=input.split()[1] %}
 {% if not ticket_id %}
-{% set ticket_id|run()|trim("\n") %}
-jira issues list \
-  --plain \
-  --columns KEY,TYPE,ASSIGNEE,SUMMARY \
-  --no-headers |
-fzf  \
-  --preview "$(command -v jira)"' issue show $(echo {1} | cut -d" " -f1)' \
-  --preview-window=bottom:50% |
-awk '{print $1}'
-{% endset %}
+  {{ error("You must specify a ticket number") }}
 {% endif %}
 {{ print("Ticket:", ticket_id) }}
 
 #
-# Load the ticket JSON
+# Load the ticket
 #
-{% set ticket|run|json %}
-jira issues view {{ticket_id|escape}} --raw
-{% endset %}
-
-#
-# Load a rendered ticket description
-#
-{% set rendered_ticket|run %}
-jira issues show {{ticket_id|escape}} --plain --comments 0
-{% endset %}
-{% set description = rendered_ticket.splitlines()[8:-1]|join('\n')|dedent %}}
-
+{% set ticket=jira.issue(ticket_id) %}
 
 #
 # Map ticket labels to Github repo
@@ -75,7 +62,7 @@ jira issues show {{ticket_id|escape}} --plain --comments 0
 #
 {{print("Creating fresh branch...")}}
 {% set branch|run %}
-  branch_candiate={{ticket_id|escape}}-{{ticket.fields.summary|slugify|escape}}
+  branch_candiate={{ticket.key|escape}}-{{ticket.fields.summary|slugify|escape}}
   if git ls-remote --heads origin "$branch_candiate" | grep -q "$branch_candiate"; then
     echo "$branch_candiate"-"$RANDOM"
   else
@@ -95,7 +82,7 @@ jira issues show {{ticket_id|escape}} --plain --comments 0
 
   # Requested code changes
   ## {{ ticket.fields.summary }}
-  {{ description }}
+  {{ ticket.fields.description }}
 
   # Project files and their tags
   ```
@@ -160,7 +147,7 @@ Output the whole files you changed.
   git add .
 {% endfilter %}
 
-{% set commit|dedent|prompt("ollama/qwen3:4b")|striptags %}
+{% set commit|dedent|prompt("gemini/gemini-2.5-pro")|striptags %}
   Create a very short commit message based on this diff:
   ```
     {% filter run() %}
@@ -197,7 +184,7 @@ git commit -m {{ commit.splitlines()[0]|escape }}
 # Prompt for PR title
 #
 {{print("Prompting for PR title...")}}
-{% set title|dedent|prompt("ollama/qwen3:14b")|code|replace("'", " ")|trim %}
+{% set title|dedent|prompt("gemini/gemini-2.5-pro")|code|replace("'", " ")|trim %}
   # Task
   We need a good pull request title.
   Only one suggestion in backticks please.
@@ -229,7 +216,7 @@ git commit -m {{ commit.splitlines()[0]|escape }}
 # Prompt for PR description
 #
 {{print("Prompting for PR description...")}}
-{% set description|dedent|prompt("ollama/qwen3:14b") %}
+{% set description|dedent|prompt("gemini/gemini-2.5-pro") %}
   # Task
   Write the pull request description
 
