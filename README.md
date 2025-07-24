@@ -44,7 +44,7 @@ api_token=...
 label1=owner/repo1
 label2=owner/repo2
 
-[envs]
+[env]
 GEMINI_API_KEY=...
 ```
 

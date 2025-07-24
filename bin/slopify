@@ -26,8 +26,8 @@ if not config.read(os.path.expanduser("~/.slopify.ini")):
     sys.exit(1)
 
 # Read env vars from config
-envs = dict(config["envs"]) if "envs" in config else {}
-os.environ.update(envs)
+env = dict(config["env"]) if "env" in config else {}
+os.environ.update(env)
 
 if len(sys.argv) == 1:
   print("Usage: slopify <subcommand> (try `slopify help`)")
