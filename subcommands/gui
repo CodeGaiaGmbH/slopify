@@ -36,7 +36,7 @@ def run_script(user_input):
 
 # Define the Gradio interface
 with gr.Blocks(
-    title="Slopify UI",
+    title="Slopify GUI",
     css="footer {display: none !important;}",  # Hides the Gradio footer
 ) as demo:  # Using gr.Blocks for better layout control
 
@@ -68,5 +68,5 @@ demo.launch(
     server_name="127.0.0.1", server_port=7868, inbrowser=False, prevent_thread_lock=True
 )
 
-webview.create_window("Slopify UI", "http://127.0.0.1:7868")
+webview.create_window("Slopify GUI", "http://127.0.0.1:7868")
 webview.start()

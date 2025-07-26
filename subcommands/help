@@ -8,6 +8,6 @@ SUBCOMMANDS:
   pick-comment  - Changes your local code based on a github comment
   scan-tickets  - Scan Jira tickets with the `slopify` label and create PRs for them
   fix-ci-simple - Fix simple CI errors
-  ui            - Open the UI
+  gui           - Open the GUI
 {%- endset %}
 {{print(help)}}
