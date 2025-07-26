@@ -26,9 +26,11 @@ git clone git@github.com:Spenoki-Solutions-GmbH/slopify.git
 ```
 export PATH="/path/to/slopify/bin:$PATH"
 ```
-### 3. Dependencies
-* Run: `brew install fzf jq uv gh`
-* Run: `gh auth login` 
+### 3. Install nix
+The only thing you need to install is [nix](https://nix.dev/install-nix)
+
+### 4. Login at GitHub
+* Run: `nix-shell -p gh --run 'gh auth login'` 
 
 ### 4. Configure
 ```ini
