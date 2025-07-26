@@ -31,7 +31,9 @@ export PATH="/path/to/slopify/bin:$PATH"
 The only thing you need to install is [nix](https://nix.dev/install-nix)
 
 ### 4. Login at GitHub
-Run: `nix-shell -p gh --run 'gh auth login'` 
+```
+nix-shell -p gh --run 'gh auth login'
+``` 
 
 ### 4. Configure
 ```ini
