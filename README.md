@@ -15,7 +15,7 @@ Be carefull to not push company data in here.
 | pick-comment  | Change local files to comply with request in GitHub comment     |
 | pick-ticket   | Implement a ticket in Jira    |
 | scan-tickets   | Implement Jira tickets with `slopify` label    |
-| gui   | Open a GUI   |
+| gui   | Open the GUI   |
 
 ## Install
 ### 1. Clone this repo
