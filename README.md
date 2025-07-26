@@ -102,9 +102,6 @@ Here are some tips:
 
 ## Development Guidelines
 * Apply the "Rule of three". Copy and paste three times before refactoring.
-* Use the smallest model fit for the job.
-* Use local models when practicable.
-* Balance development speed, completion quality and model size.
 * Use clear common sense prompts that solve one task at a time.
 * Proper prompt formating does matter.
 * This is a general but opiniated solution.
