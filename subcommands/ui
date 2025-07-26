@@ -40,7 +40,7 @@ with gr.Blocks(
     css="footer {display: none !important;}",  # Hides the Gradio footer
 ) as demo:  # Using gr.Blocks for better layout control
 
-    with gr.Tab("Ticket"):
+    with gr.Tab("Implement Ticket"):
         gr.Interface(
             fn=run_script,
             inputs=gr.Textbox(
@@ -53,6 +53,12 @@ with gr.Blocks(
             flagging_mode="never",
             submit_btn="Create Pull Request",
         )
+
+    with gr.Tab("Fix CI"):
+        gr.Markdown("TODO: Integrate `slopify fix-ci-simple`.")
+
+    with gr.Tab("Apply Feedback"):
+        gr.Markdown("TODO: Integrate `slopify pick-comment`.")
 
     with gr.Tab("Config"):
         gr.Markdown("TODO: Implement.")
