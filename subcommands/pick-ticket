@@ -1,12 +1,11 @@
 #!/usr/bin/env siesta
 # vim: set ft=jinja
 
+
 #
 # Load config
 #
 {% set conf = loadini("~/.slopify.ini") %}
-{{ print("Config:", conf) }}
-
 
 #
 # Import jira
@@ -153,7 +152,6 @@ Output the whole files you changed.
       git diff --cached --unified=0 | grep -v '^@'
     {% endfilter %}
   ```
-  /no_think
 {% endset %}
 
 {% filter run %}
@@ -207,7 +205,6 @@ git commit -m {{ commit.splitlines()[0]|escape }}
     git diff $(git merge-base --fork-point "$default_branch")
   {% endfilter %}
   ```
-  /no_think
 {% endset %}
 
 
@@ -239,8 +236,6 @@ git commit -m {{ commit.splitlines()[0]|escape }}
   - Be concise, clear and brief.
   - A template for the Jira ticket url: https://{{ conf.jira.org }}.atlassian.net/browse/XXXXX
   - This is the current ticket number: {{ ticket_id }}
-
-  /no_think
 {% endset %}
 
 
