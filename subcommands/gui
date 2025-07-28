@@ -34,11 +34,10 @@ def run_script(user_input):
         yield lines
 
 
-# Define the Gradio interface
 with gr.Blocks(
     title="Slopify GUI",
     css="footer {display: none !important;}",  # Hides the Gradio footer
-) as demo:  # Using gr.Blocks for better layout control
+) as demo:
 
     with gr.Tab("Implement Ticket"):
         gr.Interface(
