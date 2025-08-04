@@ -3,11 +3,12 @@
 USAGE: slopify [SUBCOMMAND]
 
 SUBCOMMANDS:
-  help          - Prints this message
-  pick-ticket   - Creates a PR based on a jira ticket
-  pick-comment  - Changes your local code based on a github comment
-  scan-tickets  - Scan Jira tickets with the `slopify` label and create PRs for them
-  fix-ci-simple - Fix simple CI errors
-  gui           - Open the GUI
+  help            - Prints this message
+  pick-ticket     - Creates a PR based on a jira ticket
+  pick-comment    - Changes your local code based on a github comment
+  scan-tickets    - Scan Jira tickets with the `slopify` label and create PRs for them
+  fix-ci-simple   - Fix simple CI errors
+  gui             - Open the GUI
+  ticket-feedback - Get feedback on a Jira ticket
 {%- endset %}
 {{print(help)}}

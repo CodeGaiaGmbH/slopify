@@ -14,6 +14,7 @@ Be carefull to not push company data in here.
 | fix-ci-simple | Fix simple CI errors     |
 | pick-comment  | Change local files to comply with request in GitHub comment     |
 | pick-ticket   | Implement a ticket in Jira    |
+| ticket-feedback   | Get feedback on a Jira ticket    |
 | scan-tickets   | Implement Jira tickets with `slopify` label    |
 | gui   | Open the GUI   |
 

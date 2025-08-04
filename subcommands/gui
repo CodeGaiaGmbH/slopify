@@ -11,13 +11,14 @@ import gradio as gr
 import subprocess
 import os
 import webview
+from functools import partial
 
 
-def run_script(user_input):
+def run_slopify(subcommand, user_input):
     process = subprocess.Popen(
         [
-            "/Users/ihucos/slopify/bin/slopify",
-            "pick-ticket",
+            os.path.join(os.path.dirname(__file__), "..", "bin", "slopify"),
+            subcommand,
             user_input,
         ],  # or any command/script
         stdout=subprocess.PIPE,
@@ -39,9 +40,24 @@ with gr.Blocks(
     css="footer {display: none !important;}",  # Hides the Gradio footer
 ) as demo:
 
+
+    with gr.Tab("Refine Ticket"):
+        gr.Interface(
+            fn=partial(run_slopify, "ticket-feedback"),
+            inputs=gr.Textbox(
+                label="Ticket ID (e.g., ABC-123)",
+                placeholder="Enter your ticket ID here",
+            ),
+            outputs=gr.Textbox(
+                label="Log", lines=18, show_copy_button=True, interactive=False
+            ),
+            flagging_mode="never",
+            submit_btn="Get Feedback",
+        )
+
     with gr.Tab("Implement Ticket"):
         gr.Interface(
-            fn=run_script,
+            fn=partial(run_slopify, "pick-ticket"),
             inputs=gr.Textbox(
                 label="Ticket ID (e.g., ABC-123)",
                 placeholder="Enter your ticket ID here",
