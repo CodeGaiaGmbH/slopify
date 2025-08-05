@@ -16,6 +16,8 @@ Be carefull to not push company data in here.
 | pick-ticket   | Implement a ticket in Jira    |
 | ticket-feedback   | Get feedback on a Jira ticket    |
 | scan-tickets   | Implement Jira tickets with `slopify` label    |
+| ask-questions   | Ask questions regarding a branch     |
+
 | gui   | Open the GUI   |
 
 ## Install

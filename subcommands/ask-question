@@ -1,0 +1,74 @@
+#!/usr/bin/env siesta
+# vim: set ft=jinja
+
+{% set repo=input.split()[1] %}
+{% set branch=input.split()[2] %}
+{% set question=' '.join(input.split()[3:]) %}
+
+
+#
+# Make a fresh project clone
+#
+{% set repo_path|run %}
+sleep 4
+mktemp -d /tmp/slopify-XXXXXXX
+{% endset %}
+{{ cd(repo_path) }}
+{{print("Cloning repo to {} ...".format(repo_path))}}
+{% filter run %}
+set -x
+git clone git@github.com:{{repo|escape}} .
+{% endfilter %}
+
+
+#
+# Checking out branch
+#
+{{print("Checking out branch {} ...".format(branch))}}
+{% filter run %}
+set -x
+git fetch
+git checkout {{branch|escape}}
+{% endfilter %}
+
+
+#
+# Prompt for question
+#
+{{print("Prompting for question...")}}
+{% set answer|dedent|prompt("gemini/gemini-2.5-flash") %}
+  # Answer the following question
+  {{question}}
+
+  # Scope
+  The question is regarding a specific PR
+
+  # Project files and their ctags
+  ```
+  {% filter run %}
+  for file in $(git ls-files | grep -v '/migrations/'); do
+    echo -n "$file: "
+    ctags -f- "$file" 2>/dev/null | awk '{ print $1 }' | xargs | sed 's/ /, /g'
+  done
+  {% endfilter %}
+
+
+  # The diff
+  ```
+  {% filter run %}
+    default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD | cut -d'/' -f2-)"
+    git diff $(git merge-base HEAD "$default_branch")
+  {% endfilter %}
+  ```
+
+  # Whole files for reference
+  {% filter run|catfiles %}
+    default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD | cut -d'/' -f2-)"
+    git diff $(git merge-base HEAD "$default_branch") --name-only
+  {% endfilter %}
+
+  # Task
+  Answer the question the user is asking.
+{% endset %}
+
+{{print("Answer: {}".format(answer))}}

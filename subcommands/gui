@@ -14,12 +14,12 @@ import webview
 from functools import partial
 
 
-def run_slopify(subcommand, user_input):
+def run_slopify(subcommand, *args):
     process = subprocess.Popen(
         [
             os.path.join(os.path.dirname(__file__), "..", "bin", "slopify"),
             subcommand,
-            user_input,
+            *args,
         ],  # or any command/script
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -40,6 +40,26 @@ with gr.Blocks(
     css="footer {display: none !important;}",  # Hides the Gradio footer
 ) as demo:
 
+    with gr.Tab("Ask Question"):
+        gr.Interface(
+            fn=partial(run_slopify, "ask-question"),
+            inputs=[gr.Textbox(
+                label="Repository",
+                placeholder="name/repo",
+            ), gr.Textbox(
+                label="Branch",
+                placeholder="branch",
+            ), gr.Textbox(
+                label="Question",
+                placeholder="Enter your query",
+                lines=5
+            )],
+            outputs=gr.Textbox(
+                label="Log", lines=18, show_copy_button=True, interactive=False
+            ),
+            flagging_mode="never",
+            submit_btn="Query",
+        )
 
     with gr.Tab("Refine Ticket"):
         gr.Interface(
