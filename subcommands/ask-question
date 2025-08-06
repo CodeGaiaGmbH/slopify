@@ -10,7 +10,6 @@
 # Make a fresh project clone
 #
 {% set repo_path|run %}
-sleep 4
 mktemp -d /tmp/slopify-XXXXXXX
 {% endset %}
 {{ cd(repo_path) }}

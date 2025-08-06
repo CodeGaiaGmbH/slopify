@@ -90,7 +90,20 @@ with gr.Blocks(
         )
 
     with gr.Tab("Fix CI"):
-        gr.Markdown("TODO: Integrate `slopify fix-ci-simple`.")
+        gr.Interface(
+            fn=partial(run_slopify, "fix-ci-simple"),
+            inputs=[gr.Textbox(
+                label="Repository",
+                placeholder="name/repo",
+            ), gr.Textbox(
+                label="Branch",
+                placeholder="branch",
+            )],
+            outputs=gr.Textbox(
+                label="Log", lines=18, show_copy_button=True, interactive=False),
+            flagging_mode="never",
+            submit_btn="Fix CI",
+            )
 
     with gr.Tab("Apply Feedback"):
         gr.Markdown("TODO: Integrate `slopify pick-comment`.")
@@ -100,8 +113,8 @@ with gr.Blocks(
 
 
 demo.launch(
-    server_name="127.0.0.1", server_port=7868, inbrowser=False, prevent_thread_lock=True
+    server_name="127.0.0.1", server_port=7869, inbrowser=False, prevent_thread_lock=True
 )
 
-webview.create_window("Slopify GUI", "http://127.0.0.1:7868")
+webview.create_window("Slopify GUI", "http://127.0.0.1:7869")
 webview.start()

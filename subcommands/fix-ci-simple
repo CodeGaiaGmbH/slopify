@@ -2,13 +2,36 @@
 # vim: set ft=jinja
 
 
+{% set repo=input.split()[1] %}
+{% set branch=input.split()[2] %}
+
+#
+# Make a fresh project clone
+#
+{% set repo_path|run %}
+mktemp -d /tmp/slopify-XXXXXXX
+{% endset %}
+{{ cd(repo_path) }}
+{{print("Cloning repo to {} ...".format(repo_path))}}
+{% filter run %}
+set -x
+git clone git@github.com:{{repo|escape}} .
+{% endfilter %}
+
+#
+# Checking out branch
+#
+{{print("Checking out branch {} ...".format(branch))}}
+{% filter run %}
+set -x
+git fetch
+git checkout {{branch|escape}}
+{% endfilter %}
+
+
 ###
 {{ print("Retrieving error log...") }}
 ###
-{%
-  set branch = "git symbolic-ref --short HEAD || true"|run
-  or error("Current git branch could not be determined.")
-%}
 {% set error_log|run %}
   job="$(gh run list --branch {{branch|escape}} --limit 1 --jq ".[0].databaseId" --json databaseId)"
   gh run view "$job" --log-failed
@@ -55,5 +78,36 @@
 {{ print("Writing the fix to", file_with_error, "...") }}
 ###
 {{ fixed_file_contents|write(file_with_error) }}
+
+
+# Commit the changes
+#
+{{ print("Committing changes...\n") }}
+{% filter run %}
+  set -x
+  git --no-pager diff 1>&2
+  git add .
+{% endfilter %}
+{% set commit|dedent|prompt("gemini/gemini-2.5-pro") %}
+  Create a very short commit message based on this diff:
+  ```
+    {% filter run() %}
+      git diff --cached --unified=0 | grep -v '^@'
+    {% endfilter %}
+  ```
+{% endset %}
+{% filter run %}
+set -x
+git commit -m {{ commit.splitlines()[0]|escape }}
+{% endfilter %}
+
+#
+# Push changes
+#
+{{print("Pushing changes...")}}
+{% filter run %}
+set -x
+git push
+{% endfilter %}
 
 {{print("Done.")}}
