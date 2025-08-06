@@ -62,7 +62,7 @@ git checkout {{branch|escape}}
 {% set path=import('os').path %}
 {% set ns=namespace(candiate=None) %}
 {% for i in range(file_with_error.count(path.sep) + 1) %}
-  {% set ns.candiate=path.sep.join(file_with_error.split(path.sep)[i+1:]).lstrip(path.sep) %}
+  {% set ns.candiate=path.sep.join(file_with_error.split(path.sep)[i:]).lstrip(path.sep) %}
   {% if path.exists(ns.candiate) %}
     {% break %}
   {% endif %}
