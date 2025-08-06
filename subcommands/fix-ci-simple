@@ -55,6 +55,22 @@ git checkout {{branch|escape}}
 {{ print("File:", file_with_error) }}
 
 
+#
+# Normalize file
+#
+{{ print("Normalizing file path...") }}
+{% set path=import('os').path %}
+{% set ns=namespace(candiate=None) %}
+{% for i in range(file_with_error.count(path.sep) + 1) %}
+  {% set ns.candiate=path.sep.join(file_with_error.split(path.sep)[i+1:]).lstrip(path.sep) %}
+  {% if path.exists(ns.candiate) %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+{% set file_with_error=ns.candiate %}
+{{ print("Normalized file:", file_with_error) }}
+
+
 ###
 {{ print("Prompting for fixed file contents...") }}
 ###
@@ -80,6 +96,7 @@ git checkout {{branch|escape}}
 {{ fixed_file_contents|write(file_with_error) }}
 
 
+#
 # Commit the changes
 #
 {{ print("Committing changes...\n") }}
