@@ -156,7 +156,7 @@ Output the whole files you changed.
 
 {% filter run %}
 set -x
-git commit -m {{ commit.splitlines()[0]|escape }}
+git commit -m {{ commit.splitlines()[0]|escape }} -m "Co-authored-by: slopify AI <slopify@codegaia.io>"
 {% endfilter %}
 
 #
