@@ -16,7 +16,7 @@
 #
 # Check the first argument is a ticket
 #
-{% set ticket_id=input.split()[1] %}
+{% set ticket_id=input.split()[0] %}
 {% if not ticket_id %}
   {{ error("You must specify a ticket number") }}
 {% endif %}
@@ -92,8 +92,8 @@
   {% endfilter %}
 
   # Task
-  List all files that could be relevant to the requested code changes.
-  Output a code block where every line is a file.
+  List important files that could be relevant to the requested code changes.
+  Output a code block where every line is a file. Select at maximum about 5 files.
 {% endset %}
 {{print("Files for context:", files.splitlines()|join(", "))}}
 
@@ -170,8 +170,10 @@ git commit -m {{ commit.splitlines()[0]|escape }} -m "Co-authored-by: slopify AI
     {{ hook_script }}
     git add .
     git diff
-    git commit -m {{ conf.hooks_commit[repo]|default("Run hook")|escape }} --no-verify
-    exit
+    git commit \
+      -m {{ conf.hooks_commit[repo]|default("Run hook")|escape }} \
+      -m "Co-authored-by: slopify AI <slopify@codegaia.io>" \
+      --no-verify || true
   {% endfilter %}
 {% else %}
   {{print("No hook script found.")}}

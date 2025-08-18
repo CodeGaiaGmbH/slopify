@@ -16,7 +16,7 @@
 #
 # Check the first argument is a ticket
 #
-{% set ticket_id=input.split()[1] %}
+{% set ticket_id=input.split()[0] %}
 {% if not ticket_id %}
   {{ error("You must specify a ticket number") }}
 {% endif %}

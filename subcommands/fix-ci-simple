@@ -2,8 +2,8 @@
 # vim: set ft=jinja
 
 
-{% set repo=input.split()[1] %}
-{% set branch=input.split()[2] %}
+{% set repo=input.split()[0] %}
+{% set branch=input.split()[1] %}
 
 #
 # Make a fresh project clone

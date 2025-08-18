@@ -42,4 +42,4 @@ if not os.path.exists(subcommand_path):
   print(f"Subcommand {subcommand} does not exist")
   sys.exit(1) 
 
-os.execv(subcommand_path, [subcommand_path] + sys.argv[1:])
+os.execv(subcommand_path, sys.argv[1:])

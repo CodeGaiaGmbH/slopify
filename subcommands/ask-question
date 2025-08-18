@@ -1,9 +1,9 @@
 #!/usr/bin/env siesta
 # vim: set ft=jinja
 
-{% set repo=input.split()[1] %}
-{% set branch=input.split()[2] %}
-{% set question=' '.join(input.split()[3:]) %}
+{% set repo=input.split()[0] %}
+{% set branch=input.split()[1] %}
+{% set question=' '.join(input.split()[2:]) %}
 
 
 #
