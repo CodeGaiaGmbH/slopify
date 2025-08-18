@@ -1,0 +1,92 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -p uv cacert git
+#! nix-shell -i 'uv run --no-project --with git+https://github.com/ihucos/siesta.git siesta' 
+
+#
+# Load config
+#
+{% set conf = loadini("~/.slopify.ini") %}
+
+#
+# Get current branch
+#
+{% set current_branch|run %}
+git rev-parse --abbrev-ref HEAD
+{% endset %}
+
+
+#
+# Prompt for PR title
+#
+{{print("Prompting for PR title...")}}
+{% set title|dedent|prompt("gemini/gemini-2.5-pro")|code|replace("'", " ")|trim %}
+  # Task
+  We need a good pull request title.
+  Only one suggestion in backticks please.
+
+  ## Use Semantic Commit Messages
+  feat: (new feature for the user, not a new feature for build script)
+  fix: (bug fix for the user, not a fix to a build script)
+  docs: (changes to the documentation)
+  style: (formatting, missing semi colons, etc; no production code change)
+  refactor: (refactoring production code, eg. renaming a variable)
+  test: (adding missing tests, refactoring tests; no production code change)
+  chore: (updating grunt tasks etc; no production code change)
+
+  ## Add the ticket number
+  Infer the ticket number from `{{ current_branch }}`. Example for a title: `Feat(DD-123): ....`.
+
+  # These are the PR changes
+  ```
+  {% filter run %}
+    default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD | cut -d'/' -f2-)"
+    git diff $(git merge-base --fork-point "$default_branch")
+  {% endfilter %}
+  ```
+{% endset %}
+
+
+#
+# Prompt for PR description
+#
+{{print("Prompting for PR description...")}}
+{% set description|dedent|prompt("gemini/gemini-2.5-pro") %}
+  # Task
+  Write the pull request description
+
+  ## The PR template to use
+  ```
+  {% filter run %}
+  cat .github/pull_request_template.md || echo "No template found"
+  {% endfilter %}
+  ```
+
+  ## The code changes
+  ```
+  {% filter run %}
+  default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD | cut -d'/' -f2-)"
+  git diff $(git merge-base --fork-point "$default_branch")
+  {% endfilter %}
+  ```
+
+
+  # Notes:
+  - Be concise, clear and brief.
+  - A template for the Jira ticket url: https://{{ conf.jira.org }}.atlassian.net/browse/XXXXX
+  - If possible infer the ticket number from the branch: {{ current_branch }}
+{% endset %}
+
+
+#
+# Create pull request
+#
+{% filter run %}
+  set -ex
+  gh pr create \
+    --title {{ title|escape }} \
+    --body  {{ description|escape }} \
+    --head {{ current_branch|escape }} \
+    --web
+{% endfilter %}
+
+{{print("\nDone.")}}
