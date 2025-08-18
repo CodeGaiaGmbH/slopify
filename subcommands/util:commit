@@ -1,0 +1,16 @@
+#!/usr/bin/env siesta
+# vim: set ft=jinja
+
+{{ print("Committing changes...") }}
+{% set commit|dedent|prompt("gemini/gemini-2.5-flash")|striptags %}
+    Craft a very short commit message based on this diff:
+    ```
+    {{ "git diff --cached --unified=0 | grep -v '^@' || true"|run
+        or error("No staged changes") }}
+    ```
+{% endset %}
+
+{% filter run %}
+    set -x
+    git commit -m {{ commit.splitlines()|first|escape }} -m "Co-authored-by: slopify AI <slopify@codegaia.io>"
+{% endfilter %}
