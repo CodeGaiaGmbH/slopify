@@ -1,0 +1,25 @@
+#!/usr/bin/env siesta
+# vim: set ft=jinja
+
+
+#
+# Import jira ticket
+#
+{% set ticket=import("ticket").load() %}
+
+#
+# Create a fresh branch
+#
+{{print("Creating fresh branch...")}}
+{% set branch|run %}
+  branch_candiate={{ticket.key|escape}}-{{ticket.fields.summary|slugify|escape}}
+  if git ls-remote --heads origin "$branch_candiate" | grep -q "$branch_candiate"; then
+    echo "$branch_candiate"-"$RANDOM"
+  else
+    echo "$branch_candiate"
+  fi
+{% endset %}
+{% filter run() %}
+  set -x
+  git checkout -b {{branch|escape}}
+{% endfilter %}
