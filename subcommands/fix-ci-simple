@@ -99,24 +99,12 @@ git checkout {{branch|escape}}
 #
 # Commit the changes
 #
-{{ print("Committing changes...\n") }}
 {% filter run %}
   set -x
   git --no-pager diff 1>&2
   git add .
 {% endfilter %}
-{% set commit|dedent|prompt("gemini/gemini-2.5-pro") %}
-  Create a very short commit message based on this diff:
-  ```
-    {% filter run() %}
-      git diff --cached --unified=0 | grep -v '^@'
-    {% endfilter %}
-  ```
-{% endset %}
-{% filter run %}
-set -x
-git commit -m {{ commit.splitlines()[0]|escape }}
-{% endfilter %}
+{% include "util:commit" %}
 
 #
 # Push changes
