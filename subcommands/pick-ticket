@@ -72,62 +72,15 @@
 {% endfilter %}
 
 #
-# Prompt for list of relevant files
+# implement
 #
-{{print("Prompting for relevant files list...")}}
-{% set files|dedent|prompt("anthropic/claude-sonnet-4-20250514")|code %}
-
-  # Requested code changes
+{% set requested_changes|dedent %}
   ## {{ ticket.fields.summary }}
   {{ ticket.fields.description }}
-
-  # Project files and their tags
-  ```
-  {% filter run %}
-  for file in $(git ls-files | grep -v '/migrations/'); do
-    echo -n "$file: "
-    ctags -f- "$file" 2>/dev/null | awk '{ print $1 }' | xargs | sed 's/ /, /g'
-  done
-  {% endfilter %}
-
-  # Task
-  List the most relevant files the requested code changes.
-  Output a code block where every line is a file.
 {% endset %}
-{{print("Files for context:", files.splitlines()|join(", "))}}
-
-
-#
-# Prompt for implementation
-#
-{{print("Prompting for implementation...")}}
-{% set changes|prompt("claude-opus-4-1-20250805") %}
-# Persona
-You are a senior developer.
-
-# Implement the following changes
-## {{ ticket.fields.summary }}
-{{ description }}
-
-# Files for context
-{{files|catfiles}}
-
-# Task
-Output the whole files you changed or created.
-{% endset %}
-
-
-
-#
-# Apply changes to filesystem
-#
-{{print("Writing changes to filesystem...")}}
-{% set re=import("re") %}
-{% set regex="`(.+?)`.*?```[^\\n]*(.+?)```" %}
-{% for filename, content in re.findall(regex, changes, re.DOTALL) %}
-  {% print(filename, content[:12]) %}
-  {{ content|write(filename) }}
-{% endfor %}
+{% with input=requested_changes %}
+  {% include "util:implement" %}
+{% endwith %}
 
 #
 # Commit the changes
