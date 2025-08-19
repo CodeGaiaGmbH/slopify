@@ -91,8 +91,8 @@
   {% endfilter %}
 
   # Task
-  List important files that could be relevant to the requested code changes.
-  Output a code block where every line is a file. Select at maximum about 5 files.
+  List the most relevant files the requested code changes.
+  Output a code block where every line is a file.
 {% endset %}
 {{print("Files for context:", files.splitlines()|join(", "))}}
 
@@ -101,7 +101,7 @@
 # Prompt for implementation
 #
 {{print("Prompting for implementation...")}}
-{% set changes|prompt("anthropic/claude-sonnet-4-20250514") %}
+{% set changes|prompt("claude-opus-4-1-20250805") %}
 # Persona
 You are a senior developer.
 
@@ -132,26 +132,8 @@ Output the whole files you changed or created.
 #
 # Commit the changes
 #
-{{ print("Committing changes...\n") }}
-{% filter run %}
-  set -x
-  git --no-pager diff 1>&2
-  git add .
-{% endfilter %}
-
-{% set commit|dedent|prompt("gemini/gemini-2.5-pro") %}
-  Create a very short commit message based on this diff:
-  ```
-    {% filter run() %}
-      git diff --cached --unified=0 | grep -v '^@'
-    {% endfilter %}
-  ```
-{% endset %}
-
-{% filter run %}
-set -x
-git commit -m {{ commit.splitlines()[0]|escape }} -m "Co-authored-by: slopify AI <slopify@codegaia.io>"
-{% endfilter %}
+{% include "util:stage-all" %}
+{% include "util:commit" %}
 
 #
 # Commit any eventual changes done by the hook

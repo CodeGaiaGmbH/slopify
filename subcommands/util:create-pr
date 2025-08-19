@@ -15,11 +15,17 @@ git rev-parse --abbrev-ref HEAD
 {% endset %}
 
 
+{% set diff|run %}
+default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD | cut -d'/' -f2-)"
+git diff origin/"$default_branch"...
+{% endset %}
+
+
 #
 # Prompt for PR title
 #
 {{print("Prompting for PR title...")}}
-{% set title|dedent|prompt("gemini/gemini-2.5-pro")|code|replace("'", " ")|trim %}
+{% set title|dedent|prompt("anthropic/claude-3-5-haiku-latest")|code|replace("'", " ")|trim %}
   # Task
   We need a good pull request title.
   Only one suggestion in backticks please.
@@ -38,10 +44,7 @@ git rev-parse --abbrev-ref HEAD
 
   # These are the PR changes
   ```
-  {% filter run %}
-    default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD | cut -d'/' -f2-)"
-    git diff $(git merge-base --fork-point "$default_branch")
-  {% endfilter %}
+  {{ diff }}
   ```
 {% endset %}
 
@@ -50,7 +53,7 @@ git rev-parse --abbrev-ref HEAD
 # Prompt for PR description
 #
 {{print("Prompting for PR description...")}}
-{% set description|dedent|prompt("gemini/gemini-2.5-pro") %}
+{% set description|dedent|prompt("anthropic/claude-opus-4-1-20250805") %}
   # Task
   Write the pull request description
 
@@ -63,17 +66,30 @@ git rev-parse --abbrev-ref HEAD
 
   ## The code changes
   ```
-  {% filter run %}
-  default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD | cut -d'/' -f2-)"
-  git diff $(git merge-base --fork-point "$default_branch")
-  {% endfilter %}
+  {{ diff }}
   ```
 
-
-  # Notes:
+  # Notes
   - Be concise, clear and brief.
   - A template for the Jira ticket url: https://{{ conf.jira.org }}.atlassian.net/browse/XXXXX
   - If possible infer the ticket number from the branch: {{ current_branch }}
+
+  # Output
+  Output the description without any fluff.
+{% endset %}
+
+
+{% set description|prompt("anthropic/claude-3-5-haiku-latest") %}
+Give the formatting a final polish. Output the new description only (no fluff):
+
+{{ description }}
+{% endset %}
+
+{% set description %}
+*This pull request is generated with the help of AI with [slopify](https://github.com/CodeGaiaGmbH/slopify).*
+
+---
+{{ description }}
 {% endset %}
 
 

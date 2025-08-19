@@ -1,0 +1,9 @@
+#!/usr/bin/env siesta
+# vim: set ft=jinja
+
+{{ print("Staging all files...") }}
+{% filter run %}
+  set -x
+  git --no-pager diff 1>&2
+  git add .
+{% endfilter %}
