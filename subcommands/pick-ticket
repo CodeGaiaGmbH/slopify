@@ -6,7 +6,6 @@
 # Load config
 #
 {% set conf = loadini("~/.slopify.ini") %}
-
 #
 # Import jira
 #
@@ -76,7 +75,7 @@
 # Prompt for list of relevant files
 #
 {{print("Prompting for relevant files list...")}}
-{% set files|dedent|prompt("gemini/gemini-2.5-pro")|code %}
+{% set files|dedent|prompt("anthropic/claude-sonnet-4-20250514")|code %}
 
   # Requested code changes
   ## {{ ticket.fields.summary }}
@@ -102,7 +101,10 @@
 # Prompt for implementation
 #
 {{print("Prompting for implementation...")}}
-{% set changes|prompt("gemini/gemini-2.5-pro") %}
+{% set changes|prompt("anthropic/claude-sonnet-4-20250514") %}
+# Persona
+You are a senior developer.
+
 # Implement the following changes
 ## {{ ticket.fields.summary }}
 {{ description }}
@@ -111,27 +113,19 @@
 {{files|catfiles}}
 
 # Task
-Output the whole files you changed.
+Output the whole files you changed or created.
 {% endset %}
 
 
-
-#
-# Convert implementation completion to JSON
-#
-{{print("Prompting to convert implementation into JSON...")}}
-{% set changes_json|dedent|prompt("gemini/gemini-2.5-pro", temperature=0)|code|json %}
-  Map the following to a JSON dict: filename -> content. Where filename and content are strings.
-  ```
-  {{changes}}
-  ```
-{% endset %}
 
 #
 # Apply changes to filesystem
 #
 {{print("Writing changes to filesystem...")}}
-{% for filename, content in changes_json.items() %}
+{% set re=import("re") %}
+{% set regex="`(.+?)`.*?```[^\\n]*(.+?)```" %}
+{% for filename, content in re.findall(regex, changes, re.DOTALL) %}
+  {% print(filename, content[:12]) %}
   {{ content|write(filename) }}
 {% endfor %}
 
@@ -179,91 +173,15 @@ git commit -m {{ commit.splitlines()[0]|escape }} -m "Co-authored-by: slopify AI
   {{print("No hook script found.")}}
 {% endif %}
 
+
+#
+# Push
+#
+{% filter run %}
+    git push --set-upstream origin {{branch|escape}} --no-verify
+{% endfilter %}
+
 #
 # Prompt for PR title
 #
-{{print("Prompting for PR title...")}}
-{% set title|dedent|prompt("gemini/gemini-2.5-pro")|code|replace("'", " ")|trim %}
-  # Task
-  We need a good pull request title.
-  Only one suggestion in backticks please.
-
-  ## Use Semantic Commit Messages
-  feat: (new feature for the user, not a new feature for build script)
-  fix: (bug fix for the user, not a fix to a build script)
-  docs: (changes to the documentation)
-  style: (formatting, missing semi colons, etc; no production code change)
-  refactor: (refactoring production code, eg. renaming a variable)
-  test: (adding missing tests, refactoring tests; no production code change)
-  chore: (updating grunt tasks etc; no production code change)
-
-  ## Add the ticket number
-  Infer the ticket number from `{{ ticket_id }}`. Example for a title: `Feat(DD-123): ....`.
-
-  # These are the PR changes
-  ```
-  {% filter run %}
-    default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD | cut -d'/' -f2-)"
-    git diff $(git merge-base --fork-point "$default_branch")
-  {% endfilter %}
-  ```
-{% endset %}
-
-
-#
-# Prompt for PR description
-#
-{{print("Prompting for PR description...")}}
-{% set description|dedent|prompt("gemini/gemini-2.5-pro") %}
-  # Task
-  Write the pull request description
-
-  ## The PR template to use
-  ```
-  {% filter run %}
-  cat .github/pull_request_template.md || echo "No template found"
-  {% endfilter %}
-  ```
-
-  ## The code changes
-  ```
-  {% filter run %}
-  default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD | cut -d'/' -f2-)"
-  git diff $(git merge-base --fork-point "$default_branch")
-  {% endfilter %}
-  ```
-
-
-  # Notes:
-  - Be concise, clear and brief.
-  - A template for the Jira ticket url: https://{{ conf.jira.org }}.atlassian.net/browse/XXXXX
-  - This is the current ticket number: {{ ticket_id }}
-{% endset %}
-
-
-
-#
-# Add marker to the description that this is AI generated
-#
-{% set description %}
-This pull request is generated with the help of AI by [slopify](https://github.com/CodeGaiaGmbH/slopify).
-
----
-
-{{ description }}
-{% endset %}
-
-#
-# Create pull request
-#
-{% filter run %}
-  set -ex
-  git push --set-upstream origin {{branch|escape}} --no-verify
-  gh pr create \
-    --title WIP\ {{ title|escape }} \
-    --body  {{ description|escape }} \
-    --head {{ branch|escape }} \
-    --web
-{% endfilter %}
-
-{{print("\nDone.")}}
+{% include "util:create-pr" %}
