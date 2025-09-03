@@ -1,0 +1,24 @@
+#!/usr/bin/env siesta
+# vim: set ft=jinja
+
+
+{% include "util:stage-all" %}
+
+{{print("Prompting for fresh branch...")}}
+{% set branch|dedent|prompt("anthropic/claude-sonnet-4-20250514")|code|slugify %}
+    Craft a branch based on this diff. Output only the branch name:
+    ```
+    {{ "git diff --cached --unified=0 | grep -v '^@' || true"|run
+        or error("No staged changes") }}
+    ```
+{% endset %}
+
+{% filter run() %}
+  set -x
+  git checkout -b {{branch|escape}}
+{% endfilter %}
+{% include "util:commit" %}
+{% filter run %}
+    git push --set-upstream origin {{branch|escape}} --no-verify
+{% endfilter %}
+{% include "util:create-pr" %}
