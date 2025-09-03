@@ -59,6 +59,12 @@ GEMINI_API_KEY=...
 ```
 slopify pick-ticket ABC-123
 ```
+or
+```
+slopify gui
+```
+<img width="912" height="712" alt="Screenshot 2025-09-01 at 13 02 35" src="https://github.com/user-attachments/assets/8249b473-e6c7-4f3d-b9bb-012b3c9d4a05" />
+
 
 ## Notes on writing AI-Ready Jira tickets
 slopify's `pick-ticket` subcommand is designed to handle small, technical subtickets that where purposoly created for it. The anticipated workflow is the following:
