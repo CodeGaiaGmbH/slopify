@@ -1,87 +1,172 @@
-#!/usr/bin/env siesta
-# vim: set ft=jinja
+#!/usr/bin/env -S uv run --script
+# /// script
+# dependencies = [
+#    "llm",
+#    "llm-anthropic",
+#    "jira @ git+https://github.com/pycontribs/jira.git@3.10.1",
+# ]
+# ///
+
+import sys
+import os
+import configparser
+import subprocess
+import tempfile
+from io import StringIO
+import llm
+
+import jira as jiralib
 
 
-#
+PROMPT_TEMPLATE = """
+# Task
+Make a detailed implementation plan.
+
+# Project overview
+```
+{project_map}
+```
+
+## Ticket title
+{title}
+
+## Ticket description
+```
+{description}
+```
+
+# Notes
+- Understand project conventions by reading files.
+- Feel free to ask clarification questions.
+"""
+
+
+def read_file(file: str) -> str:
+    """Read file"""
+    print(f"read_file({file})")
+    with open(file) as f:
+        return f.read()
+
+
+def ask_questions(questions: list[str]) -> list[str]:
+    """Ask a list of question to the developer or product owner"""
+    print()
+    print()
+    print("I have questions:")
+    for question in questions:
+        print("---")
+        print(question)
+    sys.exit(1)
+
+
+def get_project_map():
+    files = {}
+    all_git_files = (
+        subprocess.check_output(
+            ["git", "ls-files"],
+        )
+        .decode("utf-8")
+        .splitlines()
+    )
+    ctags = subprocess.check_output(
+        ["ctags", "-f-"] + all_git_files,
+    ).decode("utf-8")
+    for line in ctags.splitlines():
+        tag, filename, *rest = line.split("\t")
+        if "/migrations/" in filename:
+            continue
+        files.setdefault(filename, []).append(tag)
+    files_map = StringIO()
+    for filename, tags in files.items():
+        files_map.write(f"{filename}: ")
+        files_map.write(", ".join(tags))
+        files_map.write("\n")
+    files_map.seek(0)
+    return files_map.read()
+
+
 # Load config
-#
-{% set conf = loadini("~/.slopify.ini") %}
-
-#
-# Import jira
-#
-{% set jiralib = import("jira") %}
-{% set jira=jiralib.JIRA(server=conf.jira.url, basic_auth=(conf.jira.user, conf.jira.api_token)) %})) }
-
-#
-# Check the first argument is a ticket
-#
-{% set ticket_id=input.split()[0] %}
-{% if not ticket_id %}
-  {{ error("You must specify a ticket number") }}
-{% endif %}
-{{ print("Ticket:", ticket_id) }}
-
-#
-# Load the ticket
-#
-{% set ticket=jira.issue(ticket_id) %}
-
-#
-# Map ticket labels to Github repo
-#
-{% set ns = namespace(repo=None) %}
-{% for label in ticket.fields.labels %}
-  {% set ns.repo = conf.jira_labels.get(label) %}
-  {% if ns.repo %}{% break %}{% endif %}
-{% endfor %}
-{% if not ns.repo %}
-  {{ error("Could not find a repo for this ticket, labels: {}".format(ticket.fields.labels)) }}
-{% endif %}
-{% set repo = ns.repo %}
-{{print("Repo:", repo)}}
-
-#
-# Map ticket labels to Github repo
-#
-{% set repo = "CodeGaiaGmbH/inventory-service" %}
+def load_config():
+    conf = configparser.ConfigParser()
+    conf.optionxform = str
+    conf.read(os.path.expanduser("~/.slopify.ini"))
+    return conf
 
 
-#
-# Make a fresh project clone
-#
-{% set repo_path|run %}
-  mktemp -d /tmp/slopify-{{ticket.fields.summary|slugify|escape}}-XXXXXXXX
-{% endset %}
-{{ cd(repo_path) }}
-{{print("Cloning repo to {} ...".format(repo_path))}}
-{% filter run() %}
-  git clone --depth=1 git@github.com:{{repo|escape}} . --quiet
-{% endfilter %}
-
-#
-# Prompt for feedback
-#
-{{print("Prompting for feedback...")}}
-{% set feedback|dedent|prompt("gemini/gemini-2.5-pro") %}
-
-  # The Ticket
-  ## {{ ticket.fields.summary }}
-  {{ ticket.fields.description }}
-
-  # Project files and their tags
-  ```
-  {% filter run %}
-  for file in $(git ls-files | grep -v '/migrations/'); do
-    echo -n "$file: "
-    ctags -f- "$file" 2>/dev/null | awk '{ print $1 }' | xargs | sed 's/ /, /g'
-  done
-  {% endfilter %}
-
-  # Your task
-  Is this ticket specific enough to be implemented? Be brief and informal.
-{% endset %}
+def load_jira(conf):
+    # Configure jira
+    return jiralib.JIRA(
+        server=conf.get("jira", "url"),
+        basic_auth=(
+            conf.get("jira", "user"),
+            conf.get("jira", "api_token"),
+        ),
+    )
 
 
+def clone(repo):
+    print(f"Cloning {repo}")
+    tmpdir = tempfile.TemporaryDirectory(delete=False)
+    os.chdir(tmpdir.name)
+    subprocess.run(
+        [
+            "git",
+            "clone",
+            "--depth=1",
+            "git@github.com:" + repo,
+            ".",
+        ]
+    )
 
-{{print("\n\n{}".format(feedback)) }}
+
+def main():
+    try:
+        ticket_id = sys.argv[1]
+    except IndexError:
+        print("error: first argument must be a jira ticket", file=sys.stderr)
+        sys.exit(1)
+
+    conf = load_config()
+    jira = load_jira(conf)
+    try:
+        issue = jira.issue(ticket_id)
+    except jiralib.exceptions.JIRAError as exc:
+        msg = str(exc).splitlines()[0]
+        print(f"Jira error: {msg}", file=sys.stderr)
+        sys.exit(1)
+
+    # Find repo from ticket labels
+    matching_labels = set(
+        issue.fields.labels,
+    ).intersection(
+        set(conf["jira_labels"].keys()),
+    )
+    try:
+        repo = conf.get("jira_labels", matching_labels.pop())
+    except KeyError:
+        print(f"Could not find a repo for this ticket, labels: {issue.fields.labels}")
+        sys.exit(1)
+
+    clone(repo)
+
+    model = llm.get_model("claude-4-sonnet")
+
+    prompt = PROMPT_TEMPLATE.format(
+        project_map=get_project_map(),
+        title=issue.fields.summary,
+        description=issue.fields.description.strip(" \n"),
+    )
+
+    for i in range(5):
+        print(f"Prompting {i+1}/5", "...")
+        response = model.chain(
+            prompt,
+            tools=[read_file, ask_questions],
+        )
+        # Don't print out the plan
+        response.text()
+    print("All clear!")
+
+
+if __name__ == "__main__":
+    main()

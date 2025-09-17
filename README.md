@@ -1,6 +1,6 @@
 # Slopify
 
-Your AI non-agent.
+Your AI (almost) non-agent.
 
 A wrapper around [siesta scripts](https://github.com/ihucos/siesta) to automate workflows.
 
