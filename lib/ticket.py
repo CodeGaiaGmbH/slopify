@@ -1,12 +1,37 @@
 import sys
 import os
 import configparser
+import llm
+import utils
 
 import jira
 
+PROMPT_TEMPLATE = """
+# Persona
+You are a senior software developer.
+
+# Task
+Implement the following ticket.
+
+## Ticket title
+{title}
+
+## Ticket description
+```
+{description}
+```
+
+# Project overview
+```
+{project_map}
+```
+
+# Notes
+- Understand project conventions by reading files.
+"""
+
 
 def load():
-
     if not len(sys.argv) > 2:
         print("error: first argument must be a jira ticket", file=sys.stderr)
         sys.exit(1)
@@ -25,3 +50,20 @@ def load():
         ),
     )
     return j.issue(ticket_id)
+
+
+def implement(issue):
+    model = llm.get_model("claude-4-sonnet")
+    prompt = PROMPT_TEMPLATE.format(
+        project_map=utils.get_project_map(),
+        title=issue.fields.summary,
+        description=issue.fields.description.strip(" \n"),
+    )
+
+    response = model.chain(
+        prompt,
+        tools=[utils.readFile, utils.writeFile],
+    )
+
+    # Don't print out the plan
+    response.text()

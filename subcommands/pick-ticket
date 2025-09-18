@@ -74,13 +74,8 @@
 #
 # implement
 #
-{% set requested_changes|dedent %}
-  ## {{ ticket.fields.summary }}
-  {{ ticket.fields.description }}
-{% endset %}
-{% with input=requested_changes %}
-  {% include "util:implement" %}
-{% endwith %}
+{{print("Implementing ticket...")}}
+{{ import("ticket").implement(ticket) }}
 
 #
 # Commit the changes

@@ -44,6 +44,7 @@ def load_config():
 def clone(repo):
     print(f"Cloning {repo}")
     tmpdir = tempfile.TemporaryDirectory(delete=False)
+    print(f"Created tmpdir: {tmpdir.name}")
     os.chdir(tmpdir.name)
     subprocess.run(
         [
@@ -102,13 +103,13 @@ def load_and_clone_issue():
 
 def readFile(file: str) -> str:
     """Read file"""
-    print(f"read_file({file})")
+    print(f"readFile({file})")
     with open(file) as f:
         return f.read()
 
 
 def writeFile(file: str, content: str) -> None:
     """Write file"""
-    print(f"write_file({file})")
+    print(f"writeFile({file})")
     with open(file, "w") as f:
         f.write(content)
