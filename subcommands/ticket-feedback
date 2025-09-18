@@ -8,14 +8,8 @@
 # ///
 
 import sys
-import os
-import configparser
-import subprocess
-import tempfile
-from io import StringIO
 import llm
-
-import jira as jiralib
+import utils
 
 
 PROMPT_TEMPLATE = """
@@ -41,15 +35,13 @@ Make a detailed implementation plan.
 """
 
 
-def read_file(file: str) -> str:
-    """Read file"""
-    print(f"read_file({file})")
-    with open(file) as f:
-        return f.read()
-
-
-def ask_questions(questions: list[str]) -> list[str]:
+def askQuestions(questions: list[str]) -> list[str]:
     """Ask a list of question to the developer or product owner"""
+
+    # LLM does this sometimes
+    if isinstance(questions, str):
+        questions = [questions]
+
     print()
     print()
     print("I have questions:")
@@ -59,100 +51,16 @@ def ask_questions(questions: list[str]) -> list[str]:
     sys.exit(1)
 
 
-def get_project_map():
-    files = {}
-    all_git_files = (
-        subprocess.check_output(
-            ["git", "ls-files"],
-        )
-        .decode("utf-8")
-        .splitlines()
-    )
-    ctags = subprocess.check_output(
-        ["ctags", "-f-"] + all_git_files,
-    ).decode("utf-8")
-    for line in ctags.splitlines():
-        tag, filename, *rest = line.split("\t")
-        if "/migrations/" in filename:
-            continue
-        files.setdefault(filename, []).append(tag)
-    files_map = StringIO()
-    for filename, tags in files.items():
-        files_map.write(f"{filename}: ")
-        files_map.write(", ".join(tags))
-        files_map.write("\n")
-    files_map.seek(0)
-    return files_map.read()
-
-
-# Load config
-def load_config():
-    conf = configparser.ConfigParser()
-    conf.optionxform = str
-    conf.read(os.path.expanduser("~/.slopify.ini"))
-    return conf
-
-
-def load_jira(conf):
-    # Configure jira
-    return jiralib.JIRA(
-        server=conf.get("jira", "url"),
-        basic_auth=(
-            conf.get("jira", "user"),
-            conf.get("jira", "api_token"),
-        ),
-    )
-
-
-def clone(repo):
-    print(f"Cloning {repo}")
-    tmpdir = tempfile.TemporaryDirectory(delete=False)
-    os.chdir(tmpdir.name)
-    subprocess.run(
-        [
-            "git",
-            "clone",
-            "--depth=1",
-            "git@github.com:" + repo,
-            ".",
-        ]
-    )
 
 
 def main():
-    try:
-        ticket_id = sys.argv[1]
-    except IndexError:
-        print("error: first argument must be a jira ticket", file=sys.stderr)
-        sys.exit(1)
 
-    conf = load_config()
-    jira = load_jira(conf)
-    try:
-        issue = jira.issue(ticket_id)
-    except jiralib.exceptions.JIRAError as exc:
-        msg = str(exc).splitlines()[0]
-        print(f"Jira error: {msg}", file=sys.stderr)
-        sys.exit(1)
-
-    # Find repo from ticket labels
-    matching_labels = set(
-        issue.fields.labels,
-    ).intersection(
-        set(conf["jira_labels"].keys()),
-    )
-    try:
-        repo = conf.get("jira_labels", matching_labels.pop())
-    except KeyError:
-        print(f"Could not find a repo for this ticket, labels: {issue.fields.labels}")
-        sys.exit(1)
-
-    clone(repo)
+    issue = utils.load_and_clone_issue()
 
     model = llm.get_model("claude-4-sonnet")
 
     prompt = PROMPT_TEMPLATE.format(
-        project_map=get_project_map(),
+        project_map=utils.get_project_map(),
         title=issue.fields.summary,
         description=issue.fields.description.strip(" \n"),
     )
@@ -161,7 +69,7 @@ def main():
         print(f"Prompting {i+1}/5", "...")
         response = model.chain(
             prompt,
-            tools=[read_file, ask_questions],
+            tools=[utils.readFile, askQuestions],
         )
         # Don't print out the plan
         response.text()
