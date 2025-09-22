@@ -6,53 +6,9 @@
 # Load config
 #
 {% set conf = loadini("~/.slopify.ini") %}
-#
-# Import jira
-#
-{% set jiralib = import("jira") %}
-{% set jira=jiralib.JIRA(server=conf.jira.url, basic_auth=(conf.jira.user, conf.jira.api_token)) %})) }
-
-#
-# Check the first argument is a ticket
-#
-{% set ticket_id=input.split()[0] %}
-{% if not ticket_id %}
-  {{ error("You must specify a ticket number") }}
-{% endif %}
-{{ print("Ticket:", ticket_id) }}
-
-#
-# Load the ticket
-#
-{% set ticket=jira.issue(ticket_id) %}
-
-#
-# Map ticket labels to Github repo
-#
-{% set ns = namespace(repo=None) %}
-{% for label in ticket.fields.labels %}
-  {% set ns.repo = conf.jira_labels.get(label) %}
-  {% if ns.repo %}{% break %}{% endif %}
-{% endfor %}
-{% if not ns.repo %}
-  {{ error("Could not find a repo for this ticket, labels: {}".format(ticket.fields.labels)) }}
-{% endif %}
-{% set repo = ns.repo %}
-{{print("Repo:", repo)}}
 
 
-#
-# Make a fresh project clone
-#
-{% set repo_path|run %}
-  mktemp -d /tmp/slopify-{{ticket.fields.summary|slugify|escape}}-XXXXXXXX
-{% endset %}
-{{ cd(repo_path) }}
-{{print("Cloning repo to {} ...".format(repo_path))}}
-{% filter run() %}
-  set -x
-  git clone --depth=1 git@github.com:{{repo|escape}} .
-{% endfilter %}
+{% set ticket = import("utils").load_and_clone_issue() %}
 
 #
 # Create a fresh branch

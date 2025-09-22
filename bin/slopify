@@ -4,7 +4,7 @@
 
 # /// script
 # dependencies = [
-#        "jira @ git+https://github.com/pycontribs/jira.git@3.10.1",
+#        "jira @ git+https://github.com/pycontribs/jira.git",
 #        "siesta @ git+https://github.com/ihucos/siesta.git",
 # ]
 # ///

@@ -70,7 +70,7 @@ def load_jira(conf):
 
 def load_and_clone_issue():
     try:
-        ticket_id = sys.argv[1]
+        ticket_id = sys.argv[-1]
     except IndexError:
         print("error: first argument must be a jira ticket", file=sys.stderr)
         sys.exit(1)
@@ -81,7 +81,7 @@ def load_and_clone_issue():
         issue = jira.issue(ticket_id)
     except jiralib.exceptions.JIRAError as exc:
         msg = str(exc).splitlines()[0]
-        print(f"Jira error: {msg}", file=sys.stderr)
+        print(f"Jira error (ticket: {repr(ticket_id)}): {msg}", file=sys.stderr)
         sys.exit(1)
 
     # Find repo from ticket labels
@@ -98,6 +98,16 @@ def load_and_clone_issue():
 
     clone(repo)
 
+    # On top of feature branch
+    # subprocess.check_call(["git", "pull"])
+    # subprocess.check_call(
+    #     [
+    #         "git",
+    #         "checkout",
+    #         "feature-branch",
+    #     ]
+    # )
+
     return issue
 
 
@@ -111,5 +121,10 @@ def readFile(file: str) -> str:
 def writeFile(file: str, content: str) -> None:
     """Write file"""
     print(f"writeFile({file})")
+
+    # Ensure file ends with newline
+    if not content.endswith("\n"):
+        content += "\n"
+
     with open(file, "w") as f:
         f.write(content)
