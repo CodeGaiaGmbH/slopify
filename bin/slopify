@@ -6,6 +6,8 @@
 # dependencies = [
 #        "jira @ git+https://github.com/pycontribs/jira.git",
 #        "siesta @ git+https://github.com/ihucos/siesta.git",
+#        "llm",
+#        "llm-anthropic",
 # ]
 # ///
 
