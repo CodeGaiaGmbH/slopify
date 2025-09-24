@@ -118,6 +118,16 @@ def readFile(file: str) -> str:
         return f.read()
 
 
+def readFiles(files: list[str]) -> dict[str, str]:
+    """Read files"""
+    print(f"readFiles({files})")
+    contents = {}
+    for file in files:
+        with open(file) as f:
+            contents[file] = f.read()
+    return contents
+
+
 def writeFile(file: str, content: str) -> None:
     """Write file"""
     print(f"writeFile({file})")
