@@ -10,6 +10,7 @@
 import sys
 import llm
 import utils
+import json
 
 
 PROMPT_TEMPLATE = """
@@ -50,20 +51,14 @@ Answer the given questions by understanding the project.
 ```
 """
 
-MODEL = "claude-4-sonnet"
-# MODEL = "claude-3.5-haiku"
+# MODEL = "claude-4-sonnet"
+MODEL = "claude-3.5-haiku"
 
 
 def askQuestions(questions: str) -> str:
     """Ask questions to the developer or product owner."""
-
-    if isinstance(questions, list):
-        questions = "\n".join(questions)
-
-    print("QUESTIONS:", questions)
-    requirements = questions_to_requirements(questions)
-    print("REQUIREMENTS:", requirements)
-    sys.exit(1)
+    print(f"askQuestions({questions})")
+    raise llm.CancelToolCall()
 
 
 def questions_to_requirements(questions):
@@ -80,8 +75,13 @@ def questions_to_requirements(questions):
 
     answers = response.text()
     print("ANSWERS:", answers)
-    requirements = model.prompt(f"Reformulate to a list of one-sentence requirements:\n\n{answers}") 
-    return requirements
+    requirements = model.prompt(
+        f"Reformulate to a list of one-sentence requirements:\n\n{answers}",
+        schema=llm.schema_dsl("requirement", multi=True),
+    )
+    requirements_json = json.loads(requirements.text())
+    return [i["requirement"] for i in requirements_json["items"]]
+
 
 def main():
 
@@ -97,12 +97,40 @@ def main():
 
     for i in range(5):
         print(f"Prompting {i+1}/5", "...")
-        response = model.chain(
+        conversation = model.conversation()
+        response = conversation.chain(
             prompt,
             tools=[utils.readFiles, askQuestions],
         )
         # Don't print out the plan
         response.text()
+
+        # Find the questions llm call
+        questions = None
+        for conversation in conversation.responses:
+            for tc in conversation.tool_calls():
+                if tc.name == "askQuestions":
+                    questions = tc.arguments["questions"]
+        if questions is None:
+            print("askQuestions not called")
+            continue
+        break
+
+
+    print("QUESTIONS:", questions)
+    requirements = questions_to_requirements(questions)
+    print("REQUIREMENTS:")
+    for requirement in requirements:
+        print(requirement)
+        print()
+
+    print("Updating description...")
+    descr = issue.fields.description
+    descr += "\n\n"
+    for requirement in requirements:
+        descr += f"* {requirement}\n"
+    issue.update(description=descr)
+
     print("All clear!")
 
 
