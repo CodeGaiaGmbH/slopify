@@ -35,25 +35,59 @@ def run_slopify(subcommand, *args):
         yield lines
 
 
+def jira_ticket(ticket_id, branch, action):
+    print(f"jira_ticket({ticket_id}, {branch}, {action})")
+    os.environ["SLOPIFY_BRANCH"] = branch
+    yield from run_slopify(action, ticket_id)
+
 with gr.Blocks(
     title="Slopify GUI",
     css="footer {display: none !important;}",  # Hides the Gradio footer
 ) as demo:
 
+    with gr.Tab("Jira ticket"):
+        gr.Interface(
+                fn=jira_ticket,
+            inputs=[
+                gr.Textbox(
+                    label="Ticket ID (e.g., ABC-123)",
+                    placeholder="Enter your ticket ID here",
+                ),
+                gr.Textbox(
+                    label="On to of branch (optional)",
+                    placeholder="branch",
+                ),
+                gr.Radio(
+                    label="Step",
+                    choices=[
+                        ("Refine", "ticket-feedback"),
+                        ("Plan", "plan-ticket-not-implemented"),
+                        ("Implement", "pick-ticket"),
+                    ],
+                    value="ticket-feedback",
+                ),
+            ],
+            outputs=gr.Textbox(
+                label="Log", lines=18, show_copy_button=True, interactive=False
+            ),
+            flagging_mode="never",
+            submit_btn="Go",
+        )
+
     with gr.Tab("Ask Question"):
         gr.Interface(
             fn=partial(run_slopify, "ask-question"),
-            inputs=[gr.Textbox(
-                label="Repository",
-                placeholder="name/repo",
-            ), gr.Textbox(
-                label="Branch",
-                placeholder="branch",
-            ), gr.Textbox(
-                label="Question",
-                placeholder="Enter your query",
-                lines=5
-            )],
+            inputs=[
+                gr.Textbox(
+                    label="Repository",
+                    placeholder="name/repo",
+                ),
+                gr.Textbox(
+                    label="Branch",
+                    placeholder="branch",
+                ),
+                gr.Textbox(label="Question", placeholder="Enter your query", lines=5),
+            ],
             outputs=gr.Textbox(
                 label="Log", lines=18, show_copy_button=True, interactive=False
             ),
@@ -61,55 +95,31 @@ with gr.Blocks(
             submit_btn="Query",
         )
 
-    with gr.Tab("Refine Ticket"):
-        gr.Interface(
-            fn=partial(run_slopify, "ticket-feedback"),
-            inputs=gr.Textbox(
-                label="Ticket ID (e.g., ABC-123)",
-                placeholder="Enter your ticket ID here",
-            ),
-            outputs=gr.Textbox(
-                label="Log", lines=18, show_copy_button=True, interactive=False
-            ),
-            flagging_mode="never",
-            submit_btn="Get Feedback",
-        )
-
-    with gr.Tab("Implement Ticket"):
-        gr.Interface(
-            fn=partial(run_slopify, "pick-ticket"),
-            inputs=gr.Textbox(
-                label="Ticket ID (e.g., ABC-123)",
-                placeholder="Enter your ticket ID here",
-            ),
-            outputs=gr.Textbox(
-                label="Log", lines=18, show_copy_button=True, interactive=False
-            ),
-            flagging_mode="never",
-            submit_btn="Create Pull Request",
-        )
-
     with gr.Tab("Fix CI"):
         gr.Interface(
             fn=partial(run_slopify, "fix-ci-simple"),
-            inputs=[gr.Textbox(
-                label="Repository",
-                placeholder="name/repo",
-            ), gr.Textbox(
-                label="Branch",
-                placeholder="branch",
-            )],
+            inputs=[
+                gr.Textbox(
+                    label="Repository",
+                    placeholder="name/repo",
+                ),
+                gr.Textbox(
+                    label="Branch",
+                    placeholder="branch",
+                ),
+            ],
             outputs=gr.Textbox(
-                label="Log", lines=18, show_copy_button=True, interactive=False),
+                label="Log", lines=18, show_copy_button=True, interactive=False
+            ),
             flagging_mode="never",
             submit_btn="Fix CI",
-            )
-
-    with gr.Tab("Apply Feedback"):
-        gr.Markdown("TODO: Integrate `slopify pick-comment`.")
-
-    with gr.Tab("Config"):
-        gr.Markdown("TODO: Implement.")
+        )
+    #
+    # with gr.Tab("Apply Feedback"):
+    #     gr.Markdown("TODO: Integrate `slopify pick-comment`.")
+    #
+    # with gr.Tab("Config"):
+    #     gr.Markdown("TODO: Implement.")
 
 
 demo.launch(

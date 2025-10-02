@@ -92,7 +92,7 @@ def main():
     prompt = PROMPT_TEMPLATE.format(
         project_map=utils.get_project_map(),
         title=issue.fields.summary,
-        description=issue.fields.description.strip(" \n"),
+        description=issue.fields.description.strip(" \n") if issue.fields.description else "",
     )
 
     for i in range(5):
@@ -117,7 +117,6 @@ def main():
         break
 
 
-    print("QUESTIONS:", questions)
     requirements = questions_to_requirements(questions)
     print("REQUIREMENTS:")
     for requirement in requirements:
@@ -125,7 +124,7 @@ def main():
         print()
 
     print("Updating description...")
-    descr = issue.fields.description
+    descr = issue.fields.description or ""
     descr += "\n\n"
     for requirement in requirements:
         descr += f"* {requirement}\n"
