@@ -61,7 +61,7 @@ with gr.Blocks(
                     label="Step",
                     choices=[
                         ("Refine", "ticket-feedback"),
-                        ("Plan", "plan-ticket-not-implemented"),
+                        ("Plan", "plan-ticket"),
                         ("Implement", "pick-ticket"),
                     ],
                     value="ticket-feedback",
