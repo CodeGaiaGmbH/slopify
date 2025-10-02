@@ -50,7 +50,6 @@ def clone(repo):
         [
             "git",
             "clone",
-            "--depth=1",
             "git@github.com:" + repo,
             ".",
         ]
@@ -98,15 +97,9 @@ def load_and_clone_issue():
 
     clone(repo)
 
-    # On top of feature branch
-    # subprocess.check_call(["git", "pull"])
-    # subprocess.check_call(
-    #     [
-    #         "git",
-    #         "checkout",
-    #         "feature-branch",
-    #     ]
-    # )
+    if branch := os.environ.get("SLOPIFY_BRANCH"):
+        print(f"Checking out branch {branch}")
+        subprocess.check_call(["git", "checkout", branch])
 
     return issue
 
