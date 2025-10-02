@@ -53,7 +53,7 @@ def load():
 
 
 def implement(issue):
-    model = llm.get_model("claude-4-sonnet")
+    model = llm.get_model("claude-sonnet-4.5")
     prompt = PROMPT_TEMPLATE.format(
         project_map=utils.get_project_map(),
         title=issue.fields.summary,
