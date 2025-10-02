@@ -62,7 +62,7 @@ def implement(issue):
 
     response = model.chain(
         prompt,
-        tools=[utils.readFile, utils.writeFile],
+        tools=[utils.readFiles, utils.writeFile],
     )
 
     # Don't print out the plan
