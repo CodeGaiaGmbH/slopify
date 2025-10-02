@@ -15,10 +15,18 @@ git rev-parse --abbrev-ref HEAD
 {% endset %}
 
 
-{% set diff|run %}
-default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD | cut -d'/' -f2-)"
-git diff origin/"$default_branch"...
+{% set branch|run %}
+default_branch=
+if [ -z "$SLOPIFY_BRANCH" ]; then
+	 echo "$(git symbolic-ref --short refs/remotes/origin/HEAD | cut -d'/' -f2-)"
+else
+        echo "$SLOPIFY_BRANCH"
+fi
 {% endset %}
+
+{% filter run %}
+git diff origin/"{{branch|escape}}"...
+{% endfilter %}
 
 
 #
@@ -102,6 +110,7 @@ Give the formatting a final polish. Output the new description only (no fluff):
     --title {{ title|escape }} \
     --body  {{ description|escape }} \
     --head {{ current_branch|escape }} \
+    --base {{ branch|escape }} \
     --web
 {% endfilter %}
 
