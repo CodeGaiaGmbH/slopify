@@ -3,6 +3,7 @@ import os
 import configparser
 import llm
 import utils
+import json
 
 import jira
 
@@ -11,7 +12,7 @@ PROMPT_TEMPLATE = """
 You are a senior software developer.
 
 # Task
-Implement the following ticket.
+List all files that potentially could be useful to understand and implement this ticket.
 
 ## Ticket title
 {title}
@@ -25,9 +26,26 @@ Implement the following ticket.
 ```
 {project_map}
 ```
+"""
 
-# Notes
-- Understand project conventions by reading files.
+
+PROMPT2_TEMPLATE = """
+# Persona
+You are a senior software developer.
+
+# Task
+Implement the ticket
+
+## Ticket title
+{title}
+
+## Ticket description
+```
+{description}
+```
+
+## Notes
+- Use the writeFile tool to write the files.
 """
 
 
@@ -53,17 +71,37 @@ def load():
 
 
 def implement(issue):
-    model = llm.get_model("claude-sonnet-4.5")
+    model = llm.get_model("claude-3.5-haiku")
     prompt = PROMPT_TEMPLATE.format(
         project_map=utils.get_project_map(),
         title=issue.fields.summary,
         description=issue.fields.description.strip(" \n"),
     )
 
+    response = model.prompt(
+        prompt,
+        schema=llm.schema_dsl("file", multi=True),
+    )
+    files = json.loads(response.text())
+    fragments = []
+    for item in files["items"]:
+        # print(item["file"])
+        content = utils.readFile(item["file"])
+        fragments.append(f"# {item['file']}\n\n{content}")
+
+    prompt = PROMPT2_TEMPLATE.format(
+        title=issue.fields.summary,
+        description=issue.fields.description.strip(" \n"),
+    )
     response = model.chain(
         prompt,
-        tools=[utils.readFiles, utils.writeFile],
+        # schema=llm.schema_dsl("file, content", multi=True),
+        fragments=fragments,
+        tools=[utils.writeFile],
     )
-
-    # Don't print out the plan
     response.text()
+
+    # files_content = json.loads(response.text())
+    # for item in files_content["items"]:
+    #     breakpoint()
+    #     utils.writeFile(item["file"], item["content"])
