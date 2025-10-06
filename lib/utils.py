@@ -123,7 +123,7 @@ def readFiles(files: list[str]) -> dict[str, str]:
 
 def writeFile(file: str, content: str) -> None:
     """Write file"""
-    print(f"writeFile({file})")
+    print(f"writeFile({file}, ...)")
 
     # Ensure file ends with newline
     if not content.endswith("\n"):

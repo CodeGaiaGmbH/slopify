@@ -86,13 +86,20 @@ def implement(issue):
     fragments = []
     for item in files["items"]:
         # print(item["file"])
-        content = utils.readFile(item["file"])
+        try:
+            content = utils.readFile(item["file"])
+        except FileNotFoundError:
+            print("-> Not Found")
+            continue
         fragments.append(f"# {item['file']}\n\n{content}")
 
-    prompt = PROMPT2_TEMPLATE.format(
+    prompt = PROMPT2_TEMPLATE.format/private/tmp/nix-shell-61833-0/tmps_20cgxj
+(
         title=issue.fields.summary,
         description=issue.fields.description.strip(" \n"),
     )
+
+    model = llm.get_model("claude-sonnet-4.5")
     response = model.chain(
         prompt,
         # schema=llm.schema_dsl("file, content", multi=True),
