@@ -95,8 +95,8 @@ def main():
         description=issue.fields.description.strip(" \n") if issue.fields.description else "",
     )
 
-    for i in range(5):
-        print(f"Prompting {i+1}/5", "...")
+    for i in range(3):
+        print(f"Prompting {i+1}/3", "...")
         conversation = model.conversation()
         response = conversation.chain(
             prompt,
