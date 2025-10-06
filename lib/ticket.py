@@ -93,8 +93,7 @@ def implement(issue):
             continue
         fragments.append(f"# {item['file']}\n\n{content}")
 
-    prompt = PROMPT2_TEMPLATE.format/private/tmp/nix-shell-61833-0/tmps_20cgxj
-(
+    prompt = PROMPT2_TEMPLATE.format(
         title=issue.fields.summary,
         description=issue.fields.description.strip(" \n"),
     )
