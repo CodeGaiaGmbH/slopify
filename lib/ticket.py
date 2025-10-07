@@ -12,7 +12,7 @@ PROMPT_TEMPLATE = """
 You are a senior software developer.
 
 # Task
-List all files that could be related to this changes.
+List all files that are related to this changes.
 
 ## Ticket title
 {title}
@@ -101,7 +101,13 @@ def implement(issue):
     model = llm.get_model("claude-sonnet-4.5")
     response = model.chain(
         prompt,
+        # schema=llm.schema_dsl("file, content", multi=True),
         fragments=fragments,
         tools=[utils.writeFile],
     )
     response.text()
+
+    # files_content = json.loads(response.text())
+    # for item in files_content["items"]:
+    #     breakpoint()
+    #     utils.writeFile(item["file"], item["content"])

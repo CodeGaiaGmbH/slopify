@@ -15,13 +15,12 @@ import json
 PROMPT_TEMPLATE = """
 # Task
 Craft a new ticket description with the following headers:
-    * Summary
-    * HTTP API Changes (If applicable)
-    * Model changes (If applicable)
-    * File changes
-    * Project conventions, integration and nuisances
-    * Requirements
-    * Notes
+* Summary: A short summary, two short sentences.
+* API Changes: Only if applicable. Are there any *HTTP* API changes?
+* Model schema changes: Only if applicable. Are there any new, removed or renamed fields or tables?
+* File changes: Briefly list files changed and their a one sentence summary of the changes.
+* Project conventions, integration and nuisances.
+* Notes: Short bullet points, only if necessary
 
 # Persona
 You are a senior software developer.

@@ -122,12 +122,13 @@ def readFiles(files: list[str]) -> dict[str, str]:
 
 
 def writeFile(file: str, content: str) -> None:
-    """Write file"""
+    """write file"""
     print(f"writeFile({file}, ...)")
 
     # Ensure file ends with newline
     if not content.endswith("\n"):
         content += "\n"
 
+    os.makedirs(os.path.dirname(file), exist_ok=True)
     with open(file, "w") as f:
         f.write(content)
