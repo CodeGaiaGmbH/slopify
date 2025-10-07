@@ -14,7 +14,17 @@ import json
 
 PROMPT_TEMPLATE = """
 # Task
-Make a implementation plan.
+Craft a new ticket description with the following headers:
+    * Summary
+    * HTTP API Changes (If applicable)
+    * Model changes (If applicable)
+    * File changes
+    * Project conventions, integration and nuisances
+    * Requirements
+    * Notes
+
+# Persona
+You are a senior software developer.
 
 # Project overview
 ```
@@ -33,8 +43,46 @@ Make a implementation plan.
 - Understand project conventions by reading files.
 """
 
+
+MD_PROMPT = """
+# Task
+Convert the following markdown to jira markup.
+Ommit any fluff.
+
+# Cheatsheet
+*bold*
+_italic_
+{{code}}
+-strike-
++underline+
+bq. quote
+h1. Big Title  
+h2. Medium Title  
+h3. Small Title
+----  → horizontal rule
+* Bullet 1  
+** Sub-bullet  
+# Numbered 1  
+## Sub-numbered
+|| Header 1 || Header 2 ||  
+| Row 1 Col 1 | Row 1 Col 2 |  
+| Row 2 Col 1 | Row 2 Col 2 |
+{{inline code}}  
+{code[:lang]}code here{code}  
+{noformat}raw text{noformat}  
+{panel:title=Info}content{panel}
+
+# Input
+"""
+
+
+def md2jira(inp):
+    model = llm.get_model(MODEL)
+    return model.prompt(MD_PROMPT + inp).text()
+
 # MODEL = "claude-4-sonnet"
-MODEL = "claude-3.5-haiku"
+MODEL = "claude-sonnet-4.5"
+# MODEL = "claude-3.5-haiku"
 
 
 def main():
@@ -59,19 +107,15 @@ def main():
     plan = response.text()
     print(plan)
 
-    response = conversation.prompt(
-        "Summarize the changes (in imperative form):\n\n{plan}",
-        schema=llm.schema_dsl("filename, summary", multi=True),
-    )
-    print("Summarizing...")
-    summary = json.loads(response.text())
+    plan = md2jira(plan)
+    print(plan)
 
-    print("Updating description...")
+
+
+
     descr = issue.fields.description or ""
     descr += "\n\n"
-    descr += "h3. Implementation plan\n\n"
-    for item in summary["items"]:
-        descr += f"* {{{{{item['filename']}}}}} {item['summary']}\n"
+    descr += plan
     issue.update(description=descr)
 
     print("All clear!")
