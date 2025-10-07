@@ -12,7 +12,7 @@ PROMPT_TEMPLATE = """
 You are a senior software developer.
 
 # Task
-List all files that potentially could be useful to understand and implement this ticket.
+List all files that could be related to this changes.
 
 ## Ticket title
 {title}
@@ -89,9 +89,9 @@ def implement(issue):
         try:
             content = utils.readFile(item["file"])
         except FileNotFoundError:
-            print("-> Not Found")
-            continue
-        fragments.append(f"# {item['file']}\n\n{content}")
+            fragments.append(f"# File not found: {item['file']}")
+        else:
+            fragments.append(f"# {item['file']}\n\n{content}")
 
     prompt = PROMPT2_TEMPLATE.format(
         title=issue.fields.summary,
@@ -101,13 +101,7 @@ def implement(issue):
     model = llm.get_model("claude-sonnet-4.5")
     response = model.chain(
         prompt,
-        # schema=llm.schema_dsl("file, content", multi=True),
         fragments=fragments,
         tools=[utils.writeFile],
     )
     response.text()
-
-    # files_content = json.loads(response.text())
-    # for item in files_content["items"]:
-    #     breakpoint()
-    #     utils.writeFile(item["file"], item["content"])
