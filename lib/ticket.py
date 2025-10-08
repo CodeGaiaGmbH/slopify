@@ -14,7 +14,7 @@ PROMPT_IMPLEMENT_TEMPLATE = """
 You are a senior software developer.
 
 # Task
-Implement the ticket
+Implement the ticket.
 
 ## Ticket title
 {title}
@@ -90,7 +90,7 @@ def load():
 
 
 def get_relevant_files_ask(issue, ask):
-    model = llm.get_model("claude-3.5-haiku")
+    model = llm.get_model("claude-sonnet-4.5")
     prompt = PROMPT_ASK_TEMPLATE.format(
         ask=ask,
         project_map=utils.get_project_map(),
@@ -187,6 +187,8 @@ def implement(issue):
         description=issue.fields.description.strip(" \n"),
     )
 
+    print()
+    print("Now implementing...")
     model = llm.get_model("claude-sonnet-4.5")
     response = model.chain(
         prompt,
