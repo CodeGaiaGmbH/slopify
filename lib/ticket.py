@@ -14,7 +14,7 @@ PROMPT_IMPLEMENT_TEMPLATE = """
 You are a senior software developer.
 
 # Task
-Implement the ticket.
+Write down your implementation.
 
 ## Ticket title
 {title}
@@ -23,27 +23,13 @@ Implement the ticket.
 ```
 {description}
 ```
-
-## Notes
-- Use the writeFile tool to write the files.
 """
 
-# PROMPT_PLAN_TEMPLATE = """
-# # Task
-# Implement the ticket
-#
-# # Project overview
-# ```
-# {project_map}
-# ```
-#
-# ## Ticket title
-# {title}
-#
-# ## Ticket description
-# {description}
-# """
+PROMPT_WRITE_FILES = """
+Apply the changes with writeFile:
 
+{changes}
+"""
 
 PROMPT_ASK_TEMPLATE = """
 # Task
@@ -62,10 +48,12 @@ PROMPT_ASK_TEMPLATE = """
 """
 
 
-# Fake
-def writeFile(file: str, content: str) -> None:
-    """write file"""
-    print(f"writeFile({file}, ...) (Fake)")
+def edit(file_path, old_string, new_string):
+    with open(file_path, "r") as f:
+        content = f.read()
+    content = content.replace(old_string, new_string)
+    with open(file_path, "w") as f:
+        f.write(content)
 
 
 def load():
@@ -111,33 +99,6 @@ def get_relevant_files_ask(issue, ask):
     return files
 
 
-# def get_relevant_files(issue):
-#     """
-#     Pretend to implement the ticket with cheaper model to gather relevant files.
-#     """
-#     model = llm.get_model("claude-3.5-haiku")
-#     prompt = PROMPT_PLAN_TEMPLATE.format(
-#         project_map=utils.get_project_map(),
-#         title=issue.fields.summary,
-#         description=issue.fields.description.strip(" \n"),
-#     )
-#     conversation = model.conversation()
-#     response = conversation.chain(
-#         prompt,
-#         tools=[utils.readFiles, writeFile],
-#     )
-#     print(response.text())
-#     files = set()
-#     for conversation in conversation.responses:
-#         for tc in conversation.tool_calls():
-#             if tc.name == "readFiles":
-#                 files.update(tc.arguments["files"])
-#             elif tc.name == "writeFile":
-#                 files.add(tc.arguments["file"])
-#     print(files)
-#     return list(sorted(files))
-
-
 def files_to_fragments(files):
     fragments = []
     for file in files:
@@ -150,7 +111,7 @@ def files_to_fragments(files):
     return fragments
 
 
-def implement(issue):
+def get_context_files(issue):
     files = set()
     files.update(
         get_relevant_files_ask(
@@ -182,17 +143,40 @@ def implement(issue):
             f"I forgot files to look into for the ticket. So far we have these: {', '.join(files)}",
         )
     )
-    prompt = PROMPT_IMPLEMENT_TEMPLATE.format(
-        title=issue.fields.summary,
-        description=issue.fields.description.strip(" \n"),
-    )
+    return files
 
+
+def implement(issue):
+    files = get_context_files(issue)
     print()
     print("Now implementing...")
     model = llm.get_model("claude-sonnet-4.5")
-    response = model.chain(
-        prompt,
+    response = model.prompt(
+        PROMPT_IMPLEMENT_TEMPLATE.format(
+            title=issue.fields.summary,
+            description=issue.fields.description.strip(" \n"),
+        ),
         fragments=files_to_fragments(sorted(files)),
-        tools=[utils.writeFile],
     )
-    response.text()
+
+    changes = ""
+    for chunk in response:
+        print(chunk, end="", flush=True)
+        changes += chunk
+    print()
+
+    print()
+    print("Writing files:")
+    changes = open("/tmp/a", "r").read()
+    response = llm.get_model("claude-haiku-4.5").chain(
+        PROMPT_WRITE_FILES.format(changes=changes),
+        fragments=files_to_fragments(sorted(files)),
+        tools=[utils.writeFile, edit],
+    )
+
+    # d = ""
+    for chunk in response:
+        print(chunk, end="", flush=True)
+    #     d += chunk
+    # open("/tmp/changes.txt", "w").write(d)
+    # print()
