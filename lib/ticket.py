@@ -148,6 +148,7 @@ def get_context_files(issue):
 
 def implement(issue):
     files = get_context_files(issue)
+    fragments = files_to_fragments(sorted(files))
     print()
     print("Now implementing...")
     model = llm.get_model("claude-sonnet-4.5")
@@ -156,7 +157,7 @@ def implement(issue):
             title=issue.fields.summary,
             description=issue.fields.description.strip(" \n"),
         ),
-        fragments=files_to_fragments(sorted(files)),
+        fragments=fragments,
     )
 
     changes = ""
@@ -167,16 +168,11 @@ def implement(issue):
 
     print()
     print("Writing files:")
-    changes = open("/tmp/a", "r").read()
     response = llm.get_model("claude-haiku-4.5").chain(
         PROMPT_WRITE_FILES.format(changes=changes),
-        fragments=files_to_fragments(sorted(files)),
+        fragments=fragments,
         tools=[utils.writeFile, edit],
     )
 
-    # d = ""
     for chunk in response:
         print(chunk, end="", flush=True)
-    #     d += chunk
-    # open("/tmp/changes.txt", "w").write(d)
-    # print()
