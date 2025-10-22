@@ -7,7 +7,6 @@
 # ]
 # ///
 
-import sys
 import llm
 import utils
 import json
@@ -52,7 +51,7 @@ Answer the given questions by understanding the project.
 """
 
 # MODEL = "claude-4-sonnet"
-MODEL = "claude-3.5-haiku"
+MODEL = "claude-haiku-4.5"
 
 
 def askQuestions(questions: str) -> str:

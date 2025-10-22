@@ -14,7 +14,7 @@ import json
 
 PROMPT_TEMPLATE = """
 # Task
-Craft a new ticket description with the following headers:
+Plan a new description with the following headers:
 * Summary: A short summary, two short sentences.
 * API Changes: Only if applicable. Are there any *HTTP* API changes?
 * Model schema changes: Only if applicable. Are there any new, removed or renamed fields or tables?
@@ -39,7 +39,7 @@ You are a senior software developer.
 ```
 
 # Notes
-- Understand project conventions by reading files.
+- Actually read project files for better planning.
 """
 
 
